@@ -1,10 +1,6 @@
 package mg.itu.prom16.controller;
-
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.URLDecoder;
-import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.servlet.ServletException;
@@ -12,7 +8,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.utils.Controller;
-import mg.itu.prom16.utils.ControllerUtils;
+import mg.itu.prom16.utils.Utils;
 
 public class FrontController extends HttpServlet {
     private List<String> controllers;
@@ -37,7 +33,7 @@ public class FrontController extends HttpServlet {
         if(!this.isChecked){
             String packageToScan = this.getInitParameter("package_name");
             try {
-                this.controllers=new ControllerUtils().getAllClassesStringAnnotation(packageToScan,Controller.class);
+                this.controllers=new Utils().getAllClassesStringAnnotation(packageToScan,Controller.class);
                 this.isChecked=true;
             } catch (Exception e) {
                 // TODO Auto-generated catch block
