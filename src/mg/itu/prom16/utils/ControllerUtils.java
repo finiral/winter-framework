@@ -10,7 +10,7 @@ public class ControllerUtils {
         return c.isAnnotationPresent(Controller.class);
     }
 
-    public List<Class<?>> getAllControllers(String packageName) throws Exception {
+    public List<Class<?>> getAllClassAnnotation(String packageName,Class annotation) throws Exception {
         List<Class<?>> res=new ArrayList<Class<?>>();
         //répertoire racine du package
         String path = this.getClass().getClassLoader().getResource(packageName.replace('.', '/')).getPath();
@@ -24,7 +24,7 @@ public class ControllerUtils {
                 if (file.isFile() && file.getName().endsWith(".class")) {
                     String className = packageName + "." + file.getName().replace(".class", "");
                     Class<?> classe = Class.forName(className);
-                    if (this.isController(classe)) {
+                    if (classe.isAnnotationPresent(annotation)) {
                         res.add(classe);
                     }
                 }

@@ -37,7 +37,7 @@ public class FrontController extends HttpServlet {
         if(!this.isChecked){
             String packageToScan = this.getInitParameter("package_name");
             try {
-                this.controllers=new ControllerUtils().getAllControllers(packageToScan);
+                this.controllers=new ControllerUtils().getAllClassAnnotation(packageToScan,Controller.class);
                 this.isChecked=true;
                 out.println("Premier et dernier scan");
             } catch (Exception e) {
