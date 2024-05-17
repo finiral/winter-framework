@@ -15,7 +15,7 @@ import mg.itu.prom16.utils.Controller;
 import mg.itu.prom16.utils.ControllerUtils;
 
 public class FrontController extends HttpServlet {
-    private List<Class<?>> controllers;
+    private List<String> controllers;
     private boolean isChecked;
 
 
@@ -37,7 +37,7 @@ public class FrontController extends HttpServlet {
         if(!this.isChecked){
             String packageToScan = this.getInitParameter("package_name");
             try {
-                this.controllers=new ControllerUtils().getAllClassAnnotation(packageToScan,Controller.class);
+                this.controllers=new ControllerUtils().getAllClassesStringAnnotation(packageToScan,Controller.class);
                 this.isChecked=true;
                 out.println("Premier et dernier scan");
             } catch (Exception e) {
@@ -46,8 +46,8 @@ public class FrontController extends HttpServlet {
             }
         }
         /* Printer tous les controllers */
-        for (Class<?> class1 : controllers) {
-            out.println(class1.getName());
+        for (String class1 : controllers) {
+            out.println(class1);
         }
     }
 }

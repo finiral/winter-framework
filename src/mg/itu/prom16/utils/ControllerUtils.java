@@ -10,8 +10,8 @@ public class ControllerUtils {
         return c.isAnnotationPresent(Controller.class);
     }
 
-    public List<Class<?>> getAllClassAnnotation(String packageName,Class annotation) throws Exception {
-        List<Class<?>> res=new ArrayList<Class<?>>();
+    public List<String> getAllClassesStringAnnotation(String packageName,Class annotation) throws Exception {
+        List<String> res=new ArrayList<String>();
         //répertoire racine du package
         String path = this.getClass().getClassLoader().getResource(packageName.replace('.', '/')).getPath();
         String decodedPath = URLDecoder.decode(path, "UTF-8");
@@ -25,7 +25,7 @@ public class ControllerUtils {
                     String className = packageName + "." + file.getName().replace(".class", "");
                     Class<?> classe = Class.forName(className);
                     if (classe.isAnnotationPresent(annotation)) {
-                        res.add(classe);
+                        res.add(classe.getName());
                     }
                 }
             }
