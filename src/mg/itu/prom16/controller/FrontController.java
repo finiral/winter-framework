@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.utils.Controller;
+import mg.itu.prom16.utils.ControllerUtils;
 
 public class FrontController extends HttpServlet {
     private List<Class<?>> controllers;
@@ -36,7 +37,7 @@ public class FrontController extends HttpServlet {
         if(!this.isChecked){
             String packageToScan = this.getInitParameter("package_name");
             try {
-                this.controllers=this.getAllControllers(packageToScan);
+                this.controllers=new ControllerUtils().getAllControllers(packageToScan);
                 this.isChecked=true;
                 out.println("Premier et dernier scan");
             } catch (Exception e) {
@@ -48,35 +49,5 @@ public class FrontController extends HttpServlet {
         for (Class<?> class1 : controllers) {
             out.println(class1.getName());
         }
-    }
-
-
-
-    boolean isController(Class<?> c) {
-        return c.isAnnotationPresent(Controller.class);
-    }
-
-    List<Class<?>> getAllControllers(String packageName) throws Exception {
-        List<Class<?>> res=new ArrayList<Class<?>>();
-        //répertoire racine du package
-        String path = this.getClass().getClassLoader().getResource(packageName.replace('.', '/')).getPath();
-        String decodedPath = URLDecoder.decode(path, "UTF-8");
-        File packageDir = new File(decodedPath);
-
-        // parcourir tous les fichiers dans le répertoire du package
-        File[] files = packageDir.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (file.isFile() && file.getName().endsWith(".class")) {
-                    String className = packageName + "." + file.getName().replace(".class", "");
-                    Class<?> classe = Class.forName(className);
-                    if (this.isController(classe)) {
-                        res.add(classe);
-                    }
-                }
-            }
-        }
-        return res;
-
     }
 }
