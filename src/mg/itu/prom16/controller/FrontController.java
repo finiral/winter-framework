@@ -39,7 +39,6 @@ public class FrontController extends HttpServlet {
             try {
                 this.controllers=new ControllerUtils().getAllClassesStringAnnotation(packageToScan,Controller.class);
                 this.isChecked=true;
-                out.println("Premier et dernier scan");
             } catch (Exception e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
