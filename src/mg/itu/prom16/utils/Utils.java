@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import jakarta.servlet.http.HttpServletRequest;
 import mg.itu.prom16.annotations.Controller;
 import mg.itu.prom16.annotations.GetMapping;
 
@@ -46,12 +47,21 @@ public class Utils {
                 Method[] meths=classe.getDeclaredMethods();
                 for (Method method : meths) {
                     if(method.isAnnotationPresent(GetMapping.class)){
-                        /* Prendre l'annotation */
                         String url=method.getAnnotation(GetMapping.class).url();
+                        if(res.containsKey(url)){
+                            String existant=res.get(url).className+":"+res.get(url).methodName;
+                            String nouveau=classe.getName()+":"+method.getName();
+                            throw new Exception("L'url "+url+" est déja mappé sur "+existant+" et ne peut plus l'être sur "+nouveau);
+                        }
+                        /* Prendre l'annotation */
                         res.put(url,new Mapping(c,method.getName()));
                     }
                 }
             }
         return res;
+    }
+
+    public String getURIWithoutContextPath(HttpServletRequest request){
+        return  request.getRequestURI().substring(request.getContextPath().length());
     }
 }
