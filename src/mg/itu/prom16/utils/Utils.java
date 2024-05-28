@@ -1,6 +1,7 @@
 package mg.itu.prom16.utils;
 
 import java.io.File;
+import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -63,5 +64,27 @@ public class Utils {
 
     public String getURIWithoutContextPath(HttpServletRequest request){
         return  request.getRequestURI().substring(request.getContextPath().length());
+    }
+
+    public void searchExecute(HashMap<String,Mapping> map , String path,PrintWriter out){
+        if(map.containsKey(path)){
+            Mapping m=map.get(path);
+            out.print("\n");
+            out.println("Execution de la methode qui vient de "+ m.getClassName());
+            out.println("Nom de la méthode : "+ m.getMethodName());
+            try {
+                Class<?> classe=Class.forName(m.getClassName());
+                Method methode=classe.getMethod(m.getMethodName(), (Class<?>[])null);
+                Object appelant=classe.getDeclaredConstructor().newInstance((Object[])null);
+                out.println(methode.invoke(appelant, (Object[])null));
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        else{
+            out.print("\n");
+            out.println("Aucune méthode associé a cette url");
+        }
     }
 }
