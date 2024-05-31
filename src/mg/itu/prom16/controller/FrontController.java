@@ -50,7 +50,12 @@ public class FrontController extends HttpServlet {
         out.println("L'URL EST :" + url);
         out.println("L'URL a chercher dans le map : " + path);
         /* Prendre le mapping correspondant a l'url */
-        u.searchExecute(map, path, out);
+        try {
+            out.println(u.searchExecute(map, path));
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            out.println(e.getMessage());
+        }
         /* Printer tous les controllers */
         out.print("\n");
         out.println("Liste de tous vos controllers : ");
