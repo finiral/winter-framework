@@ -66,13 +66,13 @@ public class Utils {
         return  request.getRequestURI().substring(request.getContextPath().length());
     }
 
-    public String searchExecute(HashMap<String,Mapping> map , String path) throws Exception{
+    public Object searchExecute(HashMap<String,Mapping> map , String path) throws Exception{
         if(map.containsKey(path)){
             Mapping m=map.get(path);
             Class<?> classe=Class.forName(m.getClassName());
             Method methode=classe.getMethod(m.getMethodName(), (Class<?>[])null);
             Object appelant=classe.getDeclaredConstructor().newInstance((Object[])null);
-            return methode.invoke(appelant, (Object[])null).toString();
+            return methode.invoke(appelant, (Object[])null);
         }
         else{
             throw new Exception("Aucune méthode associé a cette url");

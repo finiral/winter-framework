@@ -1,15 +1,16 @@
 package mg.itu.prom16.controller;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 
+import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.annotations.Controller;
+import mg.itu.prom16.object.ModelView;
 import mg.itu.prom16.utils.Mapping;
 import mg.itu.prom16.utils.Utils;
 
@@ -51,10 +52,26 @@ public class FrontController extends HttpServlet {
         out.println("L'URL a chercher dans le map : " + path);
         /* Prendre le mapping correspondant a l'url */
         try {
-            out.println(u.searchExecute(map, path));
+            Object res=u.searchExecute(map, path);
+            if(res instanceof String){
+                out.println(res.toString());
+            }
+            else if(res instanceof ModelView){
+                ModelView modelview=(ModelView)res;
+                String urlDispatch=modelview.getUrl();
+                RequestDispatcher dispatcher=request.getRequestDispatcher(urlDispatch);
+                HashMap<String,Object> data=modelview.getData();
+                for(String key : data.keySet()){
+                    request.setAttribute(key, data.get(key));
+                }
+                dispatcher.forward(request, response);
+            }
+            else{
+                out.println("Le type de retour n'est pas valide");
+            }
         } catch (Exception e) {
             // TODO Auto-generated catch block
-            out.println(e.getMessage());
+            e.printStackTrace(out);
         }
         /* Printer tous les controllers */
         out.print("\n");

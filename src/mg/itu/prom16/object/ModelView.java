@@ -19,8 +19,10 @@ public class ModelView {
     }
     public ModelView(String url) {
         this.setUrl(url);
+        this.data=new HashMap<String,Object>();
     }
     public ModelView() {
+        this.data=new HashMap<String,Object>();
     }
     
     public void addObject(String variableName,Object o){
