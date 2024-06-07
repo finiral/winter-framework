@@ -11,15 +11,19 @@ import java.util.List;
 import jakarta.servlet.http.HttpServletRequest;
 import mg.itu.prom16.annotations.Controller;
 import mg.itu.prom16.annotations.GetMapping;
+import mg.itu.prom16.object.ModelView;
 
 public class Utils {
     boolean isController(Class<?> c) {
         return c.isAnnotationPresent(Controller.class);
     }
 
-    public List<String> getAllClassesStringAnnotation(String packageName,Class annotation) throws Exception {
-        List<String> res=new ArrayList<String>();
-        //répertoire racine du package
+    public List<String> getAllClassesStringAnnotation(String packageName, Class annotation) throws Exception {
+        List<String> res = new ArrayList<String>();
+        // répertoire racine du package
+        if (this.getClass().getClassLoader().getResource(packageName.replace('.', '/')) == null) {
+            throw new Exception("Le package " + packageName + " n'existe pas");
+        }
         String path = this.getClass().getClassLoader().getResource(packageName.replace('.', '/')).getPath();
         String decodedPath = URLDecoder.decode(path, "UTF-8");
         File packageDir = new File(decodedPath);
@@ -40,41 +44,46 @@ public class Utils {
         return res;
 
     }
-    public HashMap<String,Mapping> scanControllersMethods(List<String> controllers) throws Exception{
-        HashMap<String,Mapping> res=new HashMap<>();
+
+    public HashMap<String, Mapping> scanControllersMethods(List<String> controllers) throws Exception {
+        HashMap<String, Mapping> res = new HashMap<>();
         for (String c : controllers) {
-                Class classe=Class.forName(c);
-                /* Prendre toutes les méthodes de cette classe */
-                Method[] meths=classe.getDeclaredMethods();
-                for (Method method : meths) {
-                    if(method.isAnnotationPresent(GetMapping.class)){
-                        String url=method.getAnnotation(GetMapping.class).url();
-                        if(res.containsKey(url)){
-                            String existant=res.get(url).className+":"+res.get(url).methodName;
-                            String nouveau=classe.getName()+":"+method.getName();
-                            throw new Exception("L'url "+url+" est déja mappé sur "+existant+" et ne peut plus l'être sur "+nouveau);
-                        }
-                        /* Prendre l'annotation */
-                        res.put(url,new Mapping(c,method.getName()));
+            Class classe = Class.forName(c);
+            /* Prendre toutes les méthodes de cette classe */
+            Method[] meths = classe.getDeclaredMethods();
+            for (Method method : meths) {
+                if (method.isAnnotationPresent(GetMapping.class)) {
+                    String url = method.getAnnotation(GetMapping.class).url();
+                    if (res.containsKey(url)) {
+                        String existant = res.get(url).className + ":" + res.get(url).methodName;
+                        String nouveau = classe.getName() + ":" + method.getName();
+                        throw new Exception("L'url " + url + " est déja mappé sur " + existant
+                                + " et ne peut plus l'être sur " + nouveau);
                     }
+                    /* Prendre l'annotation */
+                    res.put(url, new Mapping(c, method.getName()));
                 }
             }
+        }
         return res;
     }
 
-    public String getURIWithoutContextPath(HttpServletRequest request){
-        return  request.getRequestURI().substring(request.getContextPath().length());
+    public String getURIWithoutContextPath(HttpServletRequest request) {
+        return request.getRequestURI().substring(request.getContextPath().length());
     }
 
-    public Object searchExecute(HashMap<String,Mapping> map , String path) throws Exception{
-        if(map.containsKey(path)){
-            Mapping m=map.get(path);
-            Class<?> classe=Class.forName(m.getClassName());
-            Method methode=classe.getMethod(m.getMethodName(), (Class<?>[])null);
-            Object appelant=classe.getDeclaredConstructor().newInstance((Object[])null);
-            return methode.invoke(appelant, (Object[])null);
-        }
-        else{
+    public Object searchExecute(HashMap<String, Mapping> map, String path) throws Exception {
+        if (map.containsKey(path)) {
+            Mapping m = map.get(path);
+            Class<?> classe = Class.forName(m.getClassName());
+            Method methode = classe.getMethod(m.getMethodName(), (Class<?>[]) null);
+            Object appelant = classe.getDeclaredConstructor().newInstance((Object[]) null);
+            Object res = methode.invoke(appelant, (Object[]) null);
+            if (!(res instanceof String) && !(res instanceof ModelView)) {
+                throw new Exception("La méthode " + methode.getName() + " ne retourne ni String ni ModelView");
+            }
+            return res;
+        } else {
             throw new Exception("Aucune méthode associé a cette url");
         }
     }

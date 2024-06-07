@@ -66,9 +66,6 @@ public class FrontController extends HttpServlet {
                 }
                 dispatcher.forward(request, response);
             }
-            else{
-                out.println("Le type de retour n'est pas valide");
-            }
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace(out);
