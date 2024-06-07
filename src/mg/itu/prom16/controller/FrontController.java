@@ -27,7 +27,7 @@ public class FrontController extends HttpServlet {
             this.controllers=new Utils().getAllClassesStringAnnotation(packageToScan,Controller.class);
             this.map=new Utils().scanControllersMethods(this.controllers);
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new ServletException(e);
         }
     }
 
