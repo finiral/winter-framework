@@ -27,7 +27,7 @@ public class FrontController extends HttpServlet {
             this.controllers=new Utils().getAllClassesStringAnnotation(packageToScan,Controller.class);
             this.map=new Utils().scanControllersMethods(this.controllers);
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new ServletException(e);
         }
     }
 
@@ -65,9 +65,6 @@ public class FrontController extends HttpServlet {
                     request.setAttribute(key, data.get(key));
                 }
                 dispatcher.forward(request, response);
-            }
-            else{
-                out.println("Le type de retour n'est pas valide");
             }
         } catch (Exception e) {
             // TODO Auto-generated catch block
