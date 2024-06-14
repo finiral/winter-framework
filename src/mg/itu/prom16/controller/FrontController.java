@@ -52,12 +52,9 @@ public class FrontController extends HttpServlet {
         out.println("L'URL a chercher dans le map : " + path);
         /* Prendre le mapping correspondant a l'url */
         try {
-            Object res = u.searchExecute(map, path);
-            // Mapseo ny parametres
-            Map<String, String[]> m = request.getParameterMap();
-            for (String key : m.keySet()) {
-                out.println(key + " avec la valeur " + m.get(key));
-            }
+            // Prendre les parametres
+            Map<String, String[]> params = request.getParameterMap();
+            Object res = u.searchExecute(map, path,params);
             if (res instanceof String) {
                 out.println(res.toString());
             } else if (res instanceof ModelView) {
@@ -72,7 +69,7 @@ public class FrontController extends HttpServlet {
             }
         } catch (Exception e) {
             // TODO Auto-generated catch block
-            throw new ServletException(e);
+            e.printStackTrace(out);
         }
         /* Printer tous les controllers */
         out.print("\n");

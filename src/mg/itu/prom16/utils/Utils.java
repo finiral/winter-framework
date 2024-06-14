@@ -3,19 +3,46 @@ package mg.itu.prom16.utils;
 import java.io.File;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.servlet.http.HttpServletRequest;
 import mg.itu.prom16.annotations.Controller;
 import mg.itu.prom16.annotations.GetMapping;
+import mg.itu.prom16.annotations.Param;
 import mg.itu.prom16.object.ModelView;
 
 public class Utils {
     boolean isController(Class<?> c) {
         return c.isAnnotationPresent(Controller.class);
+    }
+
+    public  Object changeToPrimitive(Object o,Class<?> typage) {
+        if (typage.equals(int.class)) {
+            return Integer.parseInt((String) o);
+        } else if (typage.equals(double.class)) {
+            return Double.parseDouble((String) o);
+        } else if (typage.equals(boolean.class)) {
+            return Boolean.parseBoolean((String) o);
+
+        } else if (typage.equals(byte.class)) {
+            return Byte.parseByte((String) o);
+
+        } else if (typage.equals(float.class)) {
+            return Float.parseFloat((String) o);
+
+        } else if (typage.equals(short.class)) {
+            return Short.parseShort((String) o);
+
+        } else if (typage.equals(long.class)) {
+            return Long.parseLong((String) o);
+
+        }
+        return typage.cast(o);
     }
 
     public List<String> getAllClassesStringAnnotation(String packageName, Class annotation) throws Exception {
@@ -55,13 +82,13 @@ public class Utils {
                 if (method.isAnnotationPresent(GetMapping.class)) {
                     String url = method.getAnnotation(GetMapping.class).url();
                     if (res.containsKey(url)) {
-                        String existant = res.get(url).className + ":" + res.get(url).methodName;
+                        String existant = res.get(url).className + ":" + res.get(url).method.getName();
                         String nouveau = classe.getName() + ":" + method.getName();
                         throw new Exception("L'url " + url + " est déja mappé sur " + existant
                                 + " et ne peut plus l'être sur " + nouveau);
                     }
                     /* Prendre l'annotation */
-                    res.put(url, new Mapping(c, method.getName()));
+                    res.put(url, new Mapping(c, method));
                 }
             }
         }
@@ -72,19 +99,52 @@ public class Utils {
         return request.getRequestURI().substring(request.getContextPath().length());
     }
 
-    public Object searchExecute(HashMap<String, Mapping> map, String path) throws Exception {
-        if (map.containsKey(path)) {
-            Mapping m = map.get(path);
-            Class<?> classe = Class.forName(m.getClassName());
-            Method methode = classe.getMethod(m.getMethodName(), (Class<?>[]) null);
-            Object appelant = classe.getDeclaredConstructor().newInstance((Object[]) null);
-            Object res = methode.invoke(appelant, (Object[]) null);
-            if (!(res instanceof String) && !(res instanceof ModelView)) {
-                throw new Exception("La méthode " + methode.getName() + " ne retourne ni String ni ModelView");
+    public Object[] getArgs(Map<String, String[]> params, Method method) throws Exception {
+        List<Object> ls = new ArrayList<Object>();
+        for (Parameter param : method.getParameters()) {
+            String key = null;
+            System.out.println(param.getName());
+            if (params.containsKey(param.getName())) {
+                key = param.getName();
+            } else if (param.isAnnotationPresent(Param.class)
+                    && params.containsKey(param.getAnnotation(Param.class).paramName())) {
+                key = param.getAnnotation(Param.class).paramName();
             }
-            return res;
+            /// Traitement type
+            Class<?> typage = param.getType();
+            System.out.println(typage.getSimpleName());
+            /// Traitement values
+            if (params.get(key).length == 1) {
+                ls.add(this.changeToPrimitive(params.get(key)[0],typage));
+            } else if (params.get(key).length > 1) {
+                ls.add(this.changeToPrimitive(params.get(key),typage));
+            } else if (params.get(key) == null) {
+                ls.add(null);
+            }
+        }
+        return ls.toArray();
+    }
+
+    public Method searchMethod(HashMap<String, Mapping> map, String path)
+            throws Exception {
+        if (map.containsKey(path)) {
+            Method method = map.get(path).method;
+            return method;
         } else {
             throw new Exception("Aucune méthode associé a cette url");
         }
+    }
+
+    public Object searchExecute(HashMap<String, Mapping> map, String path, Map<String, String[]> params)
+            throws Exception {
+        Method methode = this.searchMethod(map, path);
+        Mapping m = map.get(path);
+        Class<?> classe = Class.forName(m.getClassName());
+        Object appelant = classe.getDeclaredConstructor().newInstance((Object[]) null);
+        Object res = methode.invoke(appelant, this.getArgs(params, methode));
+        if (!(res instanceof String) && !(res instanceof ModelView)) {
+            throw new Exception("La méthode " + methode.getName() + " ne retourne ni String ni ModelView");
+        }
+        return res;
     }
 }

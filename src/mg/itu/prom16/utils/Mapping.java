@@ -1,13 +1,15 @@
 package mg.itu.prom16.utils;
 
+import java.lang.reflect.Method;
+
 public class Mapping {
     String className;
-    String methodName;
-    public String getMethodName() {
-        return methodName;
+    Method method;
+    public Method getMethodName() {
+        return method;
     }
-    public void setMethodName(String methodName) {
-        this.methodName = methodName;
+    public void setMethod(Method method) {
+        this.method = method;
     }
     public String getClassName() {
         return className;
@@ -17,9 +19,9 @@ public class Mapping {
     }
     public Mapping() {
     }
-    public Mapping(String className, String methodName) {
+    public Mapping(String className, Method method) {
         setClassName(className);
-        setMethodName(methodName);
+        setMethod(method);
     }
     
 }
