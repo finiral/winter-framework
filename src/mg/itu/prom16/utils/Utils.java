@@ -21,7 +21,7 @@ public class Utils {
         return c.isAnnotationPresent(Controller.class);
     }
 
-    public  Object changeToPrimitive(Object o,Class<?> typage) {
+    public  Object parse(Object o,Class<?> typage) {
         if (typage.equals(int.class)) {
             return Integer.parseInt((String) o);
         } else if (typage.equals(double.class)) {
@@ -112,12 +112,11 @@ public class Utils {
             }
             /// Traitement type
             Class<?> typage = param.getType();
-            System.out.println(typage.getSimpleName());
             /// Traitement values
             if (params.get(key).length == 1) {
-                ls.add(this.changeToPrimitive(params.get(key)[0],typage));
+                ls.add(this.parse(params.get(key)[0],typage));
             } else if (params.get(key).length > 1) {
-                ls.add(this.changeToPrimitive(params.get(key),typage));
+                ls.add(this.parse(params.get(key),typage));
             } else if (params.get(key) == null) {
                 ls.add(null);
             }
