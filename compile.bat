@@ -10,7 +10,7 @@ call .\findJavaSrc
 set src=
 for /f "delims=" %%i in (%nomSrcTxt%) do set src=%src% %%i
 
-javac -cp "%lib%" -d %destination% %src%
+javac -parameters -cp "%lib%" -d %destination% %src% 
 
 cd /d %destination%  && jar -cvf %nomJar%.jar *
 if exist %nomSrcTxt% (

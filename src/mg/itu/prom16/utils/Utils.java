@@ -88,6 +88,9 @@ public class Utils {
                                 + " et ne peut plus l'être sur " + nouveau);
                     }
                     /* Prendre l'annotation */
+                    if(url.contains("?")){
+                        url=url.split("?")[0];
+                    }
                     res.put(url, new Mapping(c, method));
                 }
             }
