@@ -143,8 +143,8 @@ public class Utils {
         Mapping m = map.get(path);
         Class<?> classe = Class.forName(m.getClassName());
         Object appelant = classe.getDeclaredConstructor().newInstance((Object[]) null);
-        Object res = methode.invoke(appelant, this.getArgs(params, methode));
-        if (!(res instanceof String) && !(res instanceof ModelView)) {
+        Object res = methode.invoke(appelant,this.getArgs(params, methode));
+        if(!(res instanceof String) && !(res instanceof ModelView)){
             throw new Exception("La méthode " + methode.getName() + " ne retourne ni String ni ModelView");
         }
         return res;
