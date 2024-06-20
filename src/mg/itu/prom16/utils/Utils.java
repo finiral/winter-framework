@@ -2,6 +2,7 @@ package mg.itu.prom16.utils;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.net.URLDecoder;
@@ -12,7 +13,9 @@ import java.util.Map;
 
 import jakarta.servlet.http.HttpServletRequest;
 import mg.itu.prom16.annotations.Controller;
+import mg.itu.prom16.annotations.FieldParam;
 import mg.itu.prom16.annotations.GetMapping;
+import mg.itu.prom16.annotations.ObjectParam;
 import mg.itu.prom16.annotations.Param;
 import mg.itu.prom16.object.ModelView;
 
@@ -120,21 +123,48 @@ public class Utils {
         return request.getRequestURI().substring(request.getContextPath().length());
     }
 
+    public void processObject(Map<String, String[]> params, Parameter param, List<Object> ls) throws Exception {
+        String key = null;
+        Class<?> c = param.getType();
+        String nomObjet = null;
+        nomObjet = c.isAnnotationPresent(ObjectParam.class) ? c.getAnnotation(ObjectParam.class).objName()
+                : param.getName();
+        Object o = c.getConstructor((Class[]) null).newInstance((Object[]) null);
+        /// prendre les attributs
+        Field[] f = c.getDeclaredFields();
+        for (Field field : f) {
+            String attributObjet = null;
+            attributObjet = field.isAnnotationPresent(FieldParam.class)
+                    ? field.getAnnotation(FieldParam.class).paramName()
+                    : field.getName();
+            key = nomObjet + "." + attributObjet;
+            Method setters = c.getDeclaredMethod(setCatMethodName(attributObjet), field.getType());
+            if (params.get(key) == null) {
+                setters.invoke(o, null);
+            } else if (params.get(key).length == 1) {
+                setters.invoke(o, this.parse(params.get(key)[0], field.getType()));
+            } else if (params.get(key).length > 1) {
+                setters.invoke(o, this.parse(params.get(key), field.getType()));
+            }
+        }
+        ls.add(o);
+    }
+
     public Object[] getArgs(Map<String, String[]> params, Method method) throws Exception {
         List<Object> ls = new ArrayList<Object>();
         for (Parameter param : method.getParameters()) {
             String key = null;
-            if (params.containsKey(param.getName())) {
-                key = param.getName();
-            } else if (param.isAnnotationPresent(Param.class)
-                    && params.containsKey(param.getAnnotation(Param.class).paramName())) {
-                key = param.getAnnotation(Param.class).paramName();
-            }
             /// Traitement type
             Class<?> typage = param.getType();
             if (!param.getType().isPrimitive() && !param.getType().equals(String.class)) {
-
+                this.processObject(params, param, ls);
             } else {
+                if (params.containsKey(param.getName())) {
+                    key = param.getName();
+                } else if (param.isAnnotationPresent(Param.class)
+                        && params.containsKey(param.getAnnotation(Param.class).paramName())) {
+                    key = param.getAnnotation(Param.class).paramName();
+                }
                 /// Traitement values
                 if (params.get(key).length == 1) {
                     ls.add(this.parse(params.get(key)[0], typage));
