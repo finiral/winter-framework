@@ -40,7 +40,7 @@ public class FrontController extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         processRequest(req, resp);
     }
-
+    
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         Utils u = new Utils();
@@ -69,6 +69,7 @@ public class FrontController extends HttpServlet {
             }
         } catch (Exception e) {
             // TODO Auto-generated catch block
+            /* throw new ServletException(e); */
             e.printStackTrace(out);
         }
         /* Printer tous les controllers */

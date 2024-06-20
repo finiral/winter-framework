@@ -17,11 +17,29 @@ import mg.itu.prom16.annotations.Param;
 import mg.itu.prom16.object.ModelView;
 
 public class Utils {
+    static public String getCatMethodName(String attributeName) {
+        String get = "get";
+        String firstLetter = attributeName.substring(0, 1).toUpperCase();
+        String rest = attributeName.substring(1);
+        String res = firstLetter.concat(rest);
+        String methodName = get.concat(res);
+        return methodName;
+    }
+
+    static public String setCatMethodName(String attributeName) {
+        String set = "set";
+        String firstLetter = attributeName.substring(0, 1).toUpperCase();
+        String rest = attributeName.substring(1);
+        String res = firstLetter.concat(rest);
+        String methodName = set.concat(res);
+        return methodName;
+    }
+
     boolean isController(Class<?> c) {
         return c.isAnnotationPresent(Controller.class);
     }
 
-    public  Object parse(Object o,Class<?> typage) {
+    public Object parse(Object o, Class<?> typage) {
         if (typage.equals(int.class)) {
             return Integer.parseInt((String) o);
         } else if (typage.equals(double.class)) {
@@ -88,8 +106,8 @@ public class Utils {
                                 + " et ne peut plus l'être sur " + nouveau);
                     }
                     /* Prendre l'annotation */
-                    if(url.contains("?")){
-                        url=url.split("?")[0];
+                    if (url.contains("?")) {
+                        url = url.split("?")[0];
                     }
                     res.put(url, new Mapping(c, method));
                 }
@@ -106,7 +124,6 @@ public class Utils {
         List<Object> ls = new ArrayList<Object>();
         for (Parameter param : method.getParameters()) {
             String key = null;
-            System.out.println(param.getName());
             if (params.containsKey(param.getName())) {
                 key = param.getName();
             } else if (param.isAnnotationPresent(Param.class)
@@ -115,14 +132,19 @@ public class Utils {
             }
             /// Traitement type
             Class<?> typage = param.getType();
-            /// Traitement values
-            if (params.get(key).length == 1) {
-                ls.add(this.parse(params.get(key)[0],typage));
-            } else if (params.get(key).length > 1) {
-                ls.add(this.parse(params.get(key),typage));
-            } else if (params.get(key) == null) {
-                ls.add(null);
+            if (!param.getType().isPrimitive() && !param.getType().equals(String.class)) {
+
+            } else {
+                /// Traitement values
+                if (params.get(key).length == 1) {
+                    ls.add(this.parse(params.get(key)[0], typage));
+                } else if (params.get(key).length > 1) {
+                    ls.add(this.parse(params.get(key), typage));
+                } else if (params.get(key) == null) {
+                    ls.add(null);
+                }
             }
+
         }
         return ls.toArray();
     }
@@ -143,8 +165,8 @@ public class Utils {
         Mapping m = map.get(path);
         Class<?> classe = Class.forName(m.getClassName());
         Object appelant = classe.getDeclaredConstructor().newInstance((Object[]) null);
-        Object res = methode.invoke(appelant,this.getArgs(params, methode));
-        if(!(res instanceof String) && !(res instanceof ModelView)){
+        Object res = methode.invoke(appelant, this.getArgs(params, methode));
+        if (!(res instanceof String) && !(res instanceof ModelView)) {
             throw new Exception("La méthode " + methode.getName() + " ne retourne ni String ni ModelView");
         }
         return res;
