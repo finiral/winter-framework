@@ -157,7 +157,6 @@ public class Utils {
             /// Traitement type
             Class<?> typage = param.getType();
             if (!typage.isPrimitive() && !typage.equals(String.class)) {
-                System.out.println("mi-process object");
                 this.processObject(params, param, ls);
             } else {
                 if (params.containsKey(param.getName())) {
