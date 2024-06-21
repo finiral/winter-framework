@@ -44,23 +44,23 @@ public class Utils {
 
     public Object parse(Object o, Class<?> typage) {
         if (typage.equals(int.class)) {
-            return Integer.parseInt((String) o);
+            return o != null ? Integer.parseInt((String) o) : 0;
         } else if (typage.equals(double.class)) {
-            return Double.parseDouble((String) o);
+            return o != null ? Double.parseDouble((String) o) : 0;
         } else if (typage.equals(boolean.class)) {
-            return Boolean.parseBoolean((String) o);
+            return o != null ? Boolean.parseBoolean((String) o) : false;
 
         } else if (typage.equals(byte.class)) {
-            return Byte.parseByte((String) o);
+            return o != null ? Byte.parseByte((String) o) : 0;
 
         } else if (typage.equals(float.class)) {
-            return Float.parseFloat((String) o);
+            return o != null ? Float.parseFloat((String) o) : 0;
 
         } else if (typage.equals(short.class)) {
-            return Short.parseShort((String) o);
+            return o != null ? Short.parseShort((String) o) : 0;
 
         } else if (typage.equals(long.class)) {
-            return Long.parseLong((String) o);
+            return o != null ? Long.parseLong((String) o) : 0;
 
         }
         return typage.cast(o);
@@ -127,7 +127,7 @@ public class Utils {
         String key = null;
         Class<?> c = param.getType();
         String nomObjet = null;
-        nomObjet = c.isAnnotationPresent(ObjectParam.class) ? c.getAnnotation(ObjectParam.class).objName()
+        nomObjet = param.isAnnotationPresent(ObjectParam.class) ? param.getAnnotation(ObjectParam.class).objName()
                 : param.getName();
         Object o = c.getConstructor((Class[]) null).newInstance((Object[]) null);
         /// prendre les attributs
@@ -139,8 +139,8 @@ public class Utils {
                     : field.getName();
             key = nomObjet + "." + attributObjet;
             Method setters = c.getDeclaredMethod(setCatMethodName(attributObjet), field.getType());
-            if (params.get(key) == null) {
-                setters.invoke(o, null);
+            if (key == null || params.get(key) == null) {
+                setters.invoke(o, this.parse(null,field.getType()));
             } else if (params.get(key).length == 1) {
                 setters.invoke(o, this.parse(params.get(key)[0], field.getType()));
             } else if (params.get(key).length > 1) {
@@ -156,7 +156,8 @@ public class Utils {
             String key = null;
             /// Traitement type
             Class<?> typage = param.getType();
-            if (!param.getType().isPrimitive() && !param.getType().equals(String.class)) {
+            if (!typage.isPrimitive() && !typage.equals(String.class)) {
+                System.out.println("mi-process object");
                 this.processObject(params, param, ls);
             } else {
                 if (params.containsKey(param.getName())) {
@@ -166,12 +167,12 @@ public class Utils {
                     key = param.getAnnotation(Param.class).paramName();
                 }
                 /// Traitement values
-                if (params.get(key).length == 1) {
+                if (key == null || params.get(key) == null) {
+                    ls.add(this.parse(null,typage));
+                } else if (params.get(key).length == 1) {
                     ls.add(this.parse(params.get(key)[0], typage));
                 } else if (params.get(key).length > 1) {
                     ls.add(this.parse(params.get(key), typage));
-                } else if (params.get(key) == null) {
-                    ls.add(null);
                 }
             }
 
