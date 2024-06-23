@@ -29,4 +29,7 @@ Framework comme Spring
     - Pour prendre des données depuis une vue , utilisez @Param sur les parametres de la fonction
     de votre controller ou bien par convention , matchez les params de la requete avec 
     les noms des parametres
+	- Les données depuis une vue peuvent être aussi prises en tant qu'objet.
+		-Utilisez @ObjectParam sur l'objet en question(ses attributs doivent avoir le même nom que les parametres ,
+		ou bien annotez avec @FieldParam)
     
