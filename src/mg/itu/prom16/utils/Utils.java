@@ -18,6 +18,7 @@ import mg.itu.prom16.annotations.GetMapping;
 import mg.itu.prom16.annotations.ObjectParam;
 import mg.itu.prom16.annotations.Param;
 import mg.itu.prom16.object.ModelView;
+import mg.itu.prom16.object.MySession;
 
 public class Utils {
     static public String getCatMethodName(String attributeName) {
@@ -150,13 +151,16 @@ public class Utils {
         ls.add(o);
     }
 
-    public Object[] getArgs(Map<String, String[]> params, Method method) throws Exception {
+    public Object[] getArgs(HttpServletRequest req,Map<String, String[]> params, Method method) throws Exception {
         List<Object> ls = new ArrayList<Object>();
         for (Parameter param : method.getParameters()) {
             String key = null;
             /// Traitement type
             Class<?> typage = param.getType();
-            if (!typage.isPrimitive() && !typage.equals(String.class)) {
+            if(typage.equals(MySession.class)){
+                ls.add(new MySession(req.getSession()));
+            }
+            else if (!typage.isPrimitive() && !typage.equals(String.class)) {
                 this.processObject(params, param, ls);
             } else {
                 if (params.containsKey(param.getName())) {
@@ -182,20 +186,20 @@ public class Utils {
     public Method searchMethod(HashMap<String, Mapping> map, String path)
             throws Exception {
         if (map.containsKey(path)) {
-            Method method = map.get(path).method;
+            Method method = map.get(path).getMethodName();
             return method;
         } else {
             throw new Exception("Aucune méthode associé a cette url");
         }
     }
 
-    public Object searchExecute(HashMap<String, Mapping> map, String path, Map<String, String[]> params)
+    public Object searchExecute(HttpServletRequest req,HashMap<String, Mapping> map, String path, Map<String, String[]> params)
             throws Exception {
         Method methode = this.searchMethod(map, path);
         Mapping m = map.get(path);
         Class<?> classe = Class.forName(m.getClassName());
         Object appelant = classe.getDeclaredConstructor().newInstance((Object[]) null);
-        Object res = methode.invoke(appelant, this.getArgs(params, methode));
+        Object res = methode.invoke(appelant, this.getArgs(req,params, methode));
         if (!(res instanceof String) && !(res instanceof ModelView)) {
             throw new Exception("La méthode " + methode.getName() + " ne retourne ni String ni ModelView");
         }
