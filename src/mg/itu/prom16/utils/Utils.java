@@ -141,7 +141,7 @@ public class Utils {
             key = nomObjet + "." + attributObjet;
             Method setters = c.getDeclaredMethod(setCatMethodName(attributObjet), field.getType());
             if (key == null || params.get(key) == null) {
-                setters.invoke(o, this.parse(null,field.getType()));
+                setters.invoke(o, this.parse(null, field.getType()));
             } else if (params.get(key).length == 1) {
                 setters.invoke(o, this.parse(params.get(key)[0], field.getType()));
             } else if (params.get(key).length > 1) {
@@ -151,16 +151,13 @@ public class Utils {
         ls.add(o);
     }
 
-    public Object[] getArgs(HttpServletRequest req,Map<String, String[]> params, Method method) throws Exception {
+    public Object[] getArgs(Map<String, String[]> params, Method method) throws Exception {
         List<Object> ls = new ArrayList<Object>();
         for (Parameter param : method.getParameters()) {
             String key = null;
             /// Traitement type
             Class<?> typage = param.getType();
-            if(typage.equals(MySession.class)){
-                ls.add(new MySession(req.getSession()));
-            }
-            else if (!typage.isPrimitive() && !typage.equals(String.class)) {
+            if (!typage.isPrimitive() && !typage.equals(String.class)) {
                 this.processObject(params, param, ls);
             } else {
                 if (params.containsKey(param.getName())) {
@@ -171,7 +168,7 @@ public class Utils {
                 }
                 /// Traitement values
                 if (key == null || params.get(key) == null) {
-                    ls.add(this.parse(null,typage));
+                    ls.add(this.parse(null, typage));
                 } else if (params.get(key).length == 1) {
                     ls.add(this.parse(params.get(key)[0], typage));
                 } else if (params.get(key).length > 1) {
@@ -193,13 +190,19 @@ public class Utils {
         }
     }
 
-    public Object searchExecute(HttpServletRequest req,HashMap<String, Mapping> map, String path, Map<String, String[]> params)
+    public Object searchExecute(HttpServletRequest req, HashMap<String, Mapping> map, String path,
+            Map<String, String[]> params)
             throws Exception {
         Method methode = this.searchMethod(map, path);
         Mapping m = map.get(path);
         Class<?> classe = Class.forName(m.getClassName());
         Object appelant = classe.getDeclaredConstructor().newInstance((Object[]) null);
-        Object res = methode.invoke(appelant, this.getArgs(req,params, methode));
+        for (Field field : classe.getDeclaredFields()) {
+            if (field.getType().equals(MySession.class)) {
+                classe.getMethod(setCatMethodName(field.getName()), MySession.class).invoke(appelant, new MySession(req.getSession()));
+            }
+        }
+        Object res = methode.invoke(appelant, this.getArgs(params, methode));
         if (!(res instanceof String) && !(res instanceof ModelView)) {
             throw new Exception("La méthode " + methode.getName() + " ne retourne ni String ni ModelView");
         }
