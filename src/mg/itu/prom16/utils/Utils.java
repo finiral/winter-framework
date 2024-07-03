@@ -151,13 +151,16 @@ public class Utils {
         ls.add(o);
     }
 
-    public Object[] getArgs(Map<String, String[]> params, Method method) throws Exception {
+    public Object[] getArgs(HttpServletRequest req,Map<String, String[]> params, Method method) throws Exception {
         List<Object> ls = new ArrayList<Object>();
         for (Parameter param : method.getParameters()) {
             String key = null;
             /// Traitement type
             Class<?> typage = param.getType();
-            if (!typage.isPrimitive() && !typage.equals(String.class)) {
+            if(typage.equals(MySession.class)){
+                ls.add(new MySession(req.getSession()));
+            }
+            else if (!typage.isPrimitive() && !typage.equals(String.class)) {
                 this.processObject(params, param, ls);
             } else {
                 if (params.containsKey(param.getName())) {
@@ -202,7 +205,7 @@ public class Utils {
                 classe.getMethod(setCatMethodName(field.getName()), MySession.class).invoke(appelant, new MySession(req.getSession()));
             }
         }
-        Object res = methode.invoke(appelant, this.getArgs(params, methode));
+        Object res = methode.invoke(appelant, this.getArgs(req,params, methode));
         if (!(res instanceof String) && !(res instanceof ModelView)) {
             throw new Exception("La méthode " + methode.getName() + " ne retourne ni String ni ModelView");
         }
