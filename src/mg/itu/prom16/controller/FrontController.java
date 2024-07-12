@@ -54,7 +54,7 @@ public class FrontController extends HttpServlet {
         try {
             // Prendre les parametres
             Map<String, String[]> params = request.getParameterMap();
-            Object res = u.searchExecute(map, path,params);
+            Object res = u.searchExecute(request,map, path,params);
             if (res instanceof String) {
                 out.println(res.toString());
             } else if (res instanceof ModelView) {
@@ -79,4 +79,5 @@ public class FrontController extends HttpServlet {
             out.println(class1);
         }
     }
+    
 }
