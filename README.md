@@ -22,14 +22,15 @@ Framework comme Spring
 		<url-pattern>/</url-pattern>
 	</servlet-mapping>
 
-## Guide d'utilisation :
+## Fonctionnalités :
 
-    - Annoter vos Controllers avec @Controller
-    - Annoter vos méthodes avec @GetMapping(String url)
-    - Pour prendre des données depuis une vue , utilisez @Param sur les parametres de la fonction
-    de votre controller ou bien par convention , matchez les params de la requete avec 
+    - Annotations de Controllers avec @Controller
+    - Annotations de méthodes avec @GetMapping(String url)
+    - Pour prendre des données depuis une vue , utiliser @Param sur les parametres de la fonction
+    de votre controller ou bien par convention , matcher les params de la requete avec 
     les noms des parametres
 	- Les données depuis une vue peuvent être aussi prises en tant qu'objet.
-		-Utilisez @ObjectParam sur l'objet en question(ses attributs doivent avoir le même nom que les parametres ,
-		ou bien annotez avec @FieldParam)
+		-Utiliser @ObjectParam sur l'objet en question(ses attributs doivent avoir le même nom que les parametres ,
+		ou bien annoter avec @FieldParam)
+	- Utiliser l'annotation @RestAPI sur une méthode pour en faire un api rest.
     

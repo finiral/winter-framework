@@ -1,0 +1,1 @@
+C:\Users\USER\College\S4\Web_Dynamique\Frameworks\winter\Fw\winter-framework\lib\gson-2.11.0.jar;C:\Users\USER\College\S4\Web_Dynamique\Frameworks\winter\Fw\winter-framework\lib\servlet-api.jar 
