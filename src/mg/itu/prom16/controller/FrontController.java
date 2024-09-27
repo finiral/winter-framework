@@ -60,8 +60,8 @@ public class FrontController extends HttpServlet {
             Method meth = u.searchMethod(map, path);
             // Execution methode
             Object res = u.execute(request, meth, map, path, params);
-            /* verification si classe est rest */
-            if (meth.getDeclaringClass().isAnnotationPresent(RestAPI.class)) {
+            /* verification si methode est rest */
+            if (meth.isAnnotationPresent(RestAPI.class)) {
                 /* Changer le type du response en json */
                 response.setContentType("application/json");
                 response.setCharacterEncoding("UTF-8");
@@ -77,7 +77,7 @@ public class FrontController extends HttpServlet {
                 }
                 
             }
-            /* si classe NON REST */
+            /* si methode NON REST */
             else {
                 out.println("L'URL EST :" + url);
                 out.println("L'URL a chercher dans le map : " + path);
