@@ -2,9 +2,12 @@ package mg.itu.prom16.controller;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.google.gson.Gson;
 
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
@@ -12,6 +15,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.annotations.Controller;
+import mg.itu.prom16.annotations.RestAPI;
 import mg.itu.prom16.object.ModelView;
 import mg.itu.prom16.utils.Mapping;
 import mg.itu.prom16.utils.Utils;
@@ -40,7 +44,7 @@ public class FrontController extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         processRequest(req, resp);
     }
-    
+
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         Utils u = new Utils();
@@ -48,36 +52,59 @@ public class FrontController extends HttpServlet {
         StringBuffer url = request.getRequestURL();
         /* URL a rechercher dans le map */
         String path = u.getURIWithoutContextPath(request);
-        out.println("L'URL EST :" + url);
-        out.println("L'URL a chercher dans le map : " + path);
         /* Prendre le mapping correspondant a l'url */
         try {
             // Prendre les parametres
             Map<String, String[]> params = request.getParameterMap();
-            Object res = u.searchExecute(request,map, path,params);
-            if (res instanceof String) {
-                out.println(res.toString());
-            } else if (res instanceof ModelView) {
-                ModelView modelview = (ModelView) res;
-                String urlDispatch = modelview.getUrl();
-                RequestDispatcher dispatcher = request.getRequestDispatcher(urlDispatch);
-                HashMap<String, Object> data = modelview.getData();
-                for (String key : data.keySet()) {
-                    request.setAttribute(key, data.get(key));
+            // Recherche methode
+            Method meth = u.searchMethod(map, path);
+            // Execution methode
+            Object res = u.execute(request, meth, map, path, params);
+            /* verification si classe est rest */
+            if (meth.getDeclaringClass().isAnnotationPresent(RestAPI.class)) {
+                /* Changer le type du response en json */
+                response.setContentType("application/json");
+                response.setCharacterEncoding("UTF-8");
+                Gson gson=new Gson();
+                /* si le type de retour nest pas modelview on return le json directement */
+                if (!(res instanceof ModelView)) {
+                    gson.toJson(res,out);
                 }
-                dispatcher.forward(request, response);
+                /* si c'est model view */
+                else {
+                    ModelView mv = (ModelView) res;
+                    gson.toJson(mv.getData(),out);
+                }
+                
+            }
+            /* si classe NON REST */
+            else {
+                out.println("L'URL EST :" + url);
+                out.println("L'URL a chercher dans le map : " + path);
+                /* Printer tous les controllers */
+                out.print("\n");
+                out.println("Liste de tous vos controllers : ");
+                for (String class1 : this.controllers) {
+                    out.println(class1);
+                }
+                if (res instanceof String) {
+                    out.println(res.toString());
+                } else if (res instanceof ModelView) {
+                    ModelView modelview = (ModelView) res;
+                    String urlDispatch = modelview.getUrl();
+                    RequestDispatcher dispatcher = request.getRequestDispatcher(urlDispatch);
+                    HashMap<String, Object> data = modelview.getData();
+                    for (String key : data.keySet()) {
+                        request.setAttribute(key, data.get(key));
+                    }
+                    dispatcher.forward(request, response);
+                }
             }
         } catch (Exception e) {
             // TODO Auto-generated catch block
             /* throw new ServletException(e); */
             e.printStackTrace(out);
         }
-        /* Printer tous les controllers */
-        out.print("\n");
-        out.println("Liste de tous vos controllers : ");
-        for (String class1 : this.controllers) {
-            out.println(class1);
-        }
     }
-    
+
 }
