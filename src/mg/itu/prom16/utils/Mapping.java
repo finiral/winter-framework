@@ -5,6 +5,13 @@ import java.lang.reflect.Method;
 public class Mapping {
     String className;
     Method method;
+    String verb;
+    public String getVerb() {
+        return verb;
+    }
+    public void setVerb(String verb) {
+        this.verb = verb;
+    }
     public Method getMethodName() {
         return method;
     }
@@ -19,9 +26,10 @@ public class Mapping {
     }
     public Mapping() {
     }
-    public Mapping(String className, Method method) {
+    public Mapping(String className, Method method,String verb) {
         setClassName(className);
         setMethod(method);
+        setVerb(verb);
     }
     
 }
