@@ -14,10 +14,12 @@ import java.util.Map;
 import jakarta.servlet.http.HttpServletRequest;
 import mg.itu.prom16.annotations.Controller;
 import mg.itu.prom16.annotations.FieldParam;
-import mg.itu.prom16.annotations.GetMapping;
+import mg.itu.prom16.annotations.Get;
 import mg.itu.prom16.annotations.ObjectParam;
 import mg.itu.prom16.annotations.Param;
+import mg.itu.prom16.annotations.Post;
 import mg.itu.prom16.annotations.RestAPI;
+import mg.itu.prom16.annotations.UrlMapping;
 import mg.itu.prom16.object.ModelView;
 import mg.itu.prom16.object.MySession;
 
@@ -102,19 +104,26 @@ public class Utils {
             /* Prendre toutes les méthodes de cette classe */
             Method[] meths = classe.getDeclaredMethods();
             for (Method method : meths) {
-                if (method.isAnnotationPresent(GetMapping.class)) {
-                    String url = method.getAnnotation(GetMapping.class).url();
+                if (method.isAnnotationPresent(UrlMapping.class)) {
+                    String url = method.getAnnotation(UrlMapping.class).url();
                     if (res.containsKey(url)) {
                         String existant = res.get(url).className + ":" + res.get(url).method.getName();
                         String nouveau = classe.getName() + ":" + method.getName();
                         throw new Exception("L'url " + url + " est déja mappé sur " + existant
                                 + " et ne peut plus l'être sur " + nouveau);
                     }
-                    /* Prendre l'annotation */
                     if (url.contains("?")) {
                         url = url.split("?")[0];
                     }
-                    res.put(url, new Mapping(c, method));
+                    /* Prendre l'annotation URL */
+                    String valeurAnnotationUrl = Get.value;
+                    if (method.isAnnotationPresent(Get.class)) {
+                        valeurAnnotationUrl = Get.value;
+                    } else if (method.isAnnotationPresent(Post.class)) {
+                        valeurAnnotationUrl = Post.value;
+
+                    }
+                    res.put(url, new Mapping(c, method, valeurAnnotationUrl));
                 }
             }
         }
@@ -220,17 +229,25 @@ public class Utils {
     public Object execute(HttpServletRequest req, Method methode, HashMap<String, Mapping> map, String path,
             Map<String, String[]> params)
             throws Exception {
-        Mapping m = map.get(path);
-        Class<?> classe = Class.forName(m.getClassName());
-        Object appelant = classe.getDeclaredConstructor().newInstance((Object[]) null);
-        for (Field field : classe.getDeclaredFields()) {
-            if (field.getType().equals(MySession.class)) {
-                classe.getMethod(setCatMethodName(field.getName()), MySession.class).invoke(appelant,
-                        new MySession(req.getSession()));
-            }
-        }
         Object res = null;
-        res = methode.invoke(appelant, this.getArgs(req, params, methode));
+        Mapping m = map.get(path);
+        // Verification REQUETE VERB
+        if (req.getMethod().equals(m.getVerb())) {
+            Class<?> classe = Class.forName(m.getClassName());
+            Object appelant = classe.getDeclaredConstructor().newInstance((Object[]) null);
+            for (Field field : classe.getDeclaredFields()) {
+                if (field.getType().equals(MySession.class)) {
+                    classe.getMethod(setCatMethodName(field.getName()), MySession.class).invoke(appelant,
+                            new MySession(req.getSession()));
+                }
+            }
+            res = methode.invoke(appelant, this.getArgs(req, params, methode));
+
+        }
+        else{
+            throw new Exception("La requete est de type "+req.getMethod()+" alors que la methode est de type "+m.getVerb());
+        }
         return res;
+
     }
 }
