@@ -8,8 +8,11 @@ import java.lang.reflect.Parameter;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import jakarta.servlet.http.HttpServletRequest;
 import mg.itu.prom16.annotations.Controller;
@@ -22,6 +25,7 @@ import mg.itu.prom16.annotations.RestAPI;
 import mg.itu.prom16.annotations.UrlMapping;
 import mg.itu.prom16.object.ModelView;
 import mg.itu.prom16.object.MySession;
+import mg.itu.prom16.object.VerbMethod;
 
 public class Utils {
     static public String getCatMethodName(String attributeName) {
@@ -106,24 +110,26 @@ public class Utils {
             for (Method method : meths) {
                 if (method.isAnnotationPresent(UrlMapping.class)) {
                     String url = method.getAnnotation(UrlMapping.class).url();
-                    if (res.containsKey(url)) {
-                        String existant = res.get(url).className + ":" + res.get(url).method.getName();
-                        String nouveau = classe.getName() + ":" + method.getName();
-                        throw new Exception("L'url " + url + " est déja mappé sur " + existant
-                                + " et ne peut plus l'être sur " + nouveau);
-                    }
-                    if (url.contains("?")) {
-                        url = url.split("?")[0];
-                    }
                     /* Prendre l'annotation URL */
                     String valeurAnnotationUrl = Get.value;
                     if (method.isAnnotationPresent(Get.class)) {
                         valeurAnnotationUrl = Get.value;
                     } else if (method.isAnnotationPresent(Post.class)) {
                         valeurAnnotationUrl = Post.value;
-
                     }
-                    res.put(url, new Mapping(c, method, valeurAnnotationUrl));
+                    if (url.contains("?")) {
+                        url = url.split("?")[0];
+                    }
+                    if (res.containsKey(url)) {
+                        if (!res.get(url).getVerbmethods().add(new VerbMethod(valeurAnnotationUrl, method))) {
+                            throw new Exception(
+                                    "Il ya deja un verb " + valeurAnnotationUrl + " sur l'url " + url);
+                        }
+                    } else {
+                        Set<VerbMethod> set = new HashSet<VerbMethod>();
+                        set.add(new VerbMethod(valeurAnnotationUrl, method));
+                        res.put(url, new Mapping(c, set));
+                    }
                 }
             }
         }
@@ -192,11 +198,21 @@ public class Utils {
         return ls.toArray();
     }
 
-    public Method searchMethod(HashMap<String, Mapping> map, String path)
+    public VerbMethod searchVerbMethod(HttpServletRequest req, HashMap<String, Mapping> map, String path)
             throws Exception {
         if (map.containsKey(path)) {
-            Method method = map.get(path).getMethodName();
-            return method;
+            VerbMethod[] verb_meths = (VerbMethod[]) map.get(path).getVerbmethods().toArray();
+            VerbMethod m = null;
+            for (VerbMethod verbMethod : verb_meths) {
+                if (verbMethod.getVerb().equals(req.getMethod())) {
+                    m = verbMethod;
+                    break;
+                }
+            }
+            if (m == null) {
+                throw new Exception("L'url ne supporte pas la méthode " + req.getMethod());
+            }
+            return m;
         } else {
             throw new Exception("Aucune méthode associé a cette url");
         }
@@ -226,13 +242,14 @@ public class Utils {
     // return res;
     // }
 
-    public Object execute(HttpServletRequest req, Method methode, HashMap<String, Mapping> map, String path,
+    public Object execute(HttpServletRequest req, VerbMethod verbmethode, HashMap<String, Mapping> map, String path,
             Map<String, String[]> params)
             throws Exception {
         Object res = null;
         Mapping m = map.get(path);
         // Verification REQUETE VERB
-        if (req.getMethod().equals(m.getVerb())) {
+        if (req.getMethod().equals(verbmethode.getVerb())) {
+            Method methode=verbmethode.getMethode();
             Class<?> classe = Class.forName(m.getClassName());
             Object appelant = classe.getDeclaredConstructor().newInstance((Object[]) null);
             for (Field field : classe.getDeclaredFields()) {
@@ -243,9 +260,9 @@ public class Utils {
             }
             res = methode.invoke(appelant, this.getArgs(req, params, methode));
 
-        }
-        else{
-            throw new Exception("La requete est de type "+req.getMethod()+" alors que la methode est de type "+m.getVerb());
+        } else {
+            throw new Exception(
+                    "La requete est de type " + req.getMethod() + " alors que la methode est de type " + verbmethode.getVerb());
         }
         return res;
 

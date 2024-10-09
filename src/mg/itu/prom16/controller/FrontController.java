@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.annotations.Controller;
 import mg.itu.prom16.annotations.RestAPI;
 import mg.itu.prom16.object.ModelView;
+import mg.itu.prom16.object.VerbMethod;
 import mg.itu.prom16.utils.Mapping;
 import mg.itu.prom16.utils.Utils;
 
@@ -57,11 +58,11 @@ public class FrontController extends HttpServlet {
             // Prendre les parametres
             Map<String, String[]> params = request.getParameterMap();
             // Recherche methode
-            Method meth = u.searchMethod(map, path);
+            VerbMethod meth = u.searchVerbMethod(request,map, path);
             // Execution methode
             Object res = u.execute(request, meth, map, path, params);
             /* verification si methode est rest */
-            if (meth.isAnnotationPresent(RestAPI.class)) {
+            if (meth.getMethode().isAnnotationPresent(RestAPI.class)) {
                 /* Changer le type du response en json */
                 response.setContentType("application/json");
                 response.setCharacterEncoding("UTF-8");
