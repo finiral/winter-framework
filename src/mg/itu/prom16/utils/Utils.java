@@ -122,6 +122,7 @@ public class Utils {
                     }
                     if (res.containsKey(url)) {
                         if (!res.get(url).getVerbmethods().add(new VerbMethod(valeurAnnotationUrl, method))) {
+                            System.out.println("tsy mety scan");
                             throw new Exception(
                                     "Il ya deja un verb " + valeurAnnotationUrl + " sur l'url " + url);
                         }
@@ -201,7 +202,7 @@ public class Utils {
     public VerbMethod searchVerbMethod(HttpServletRequest req, HashMap<String, Mapping> map, String path)
             throws Exception {
         if (map.containsKey(path)) {
-            VerbMethod[] verb_meths = (VerbMethod[]) map.get(path).getVerbmethods().toArray();
+            VerbMethod[] verb_meths = (VerbMethod[]) map.get(path).getVerbmethods().toArray(new VerbMethod[0]);
             VerbMethod m = null;
             for (VerbMethod verbMethod : verb_meths) {
                 if (verbMethod.getVerb().equals(req.getMethod())) {

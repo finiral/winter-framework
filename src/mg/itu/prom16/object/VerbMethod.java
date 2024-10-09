@@ -1,7 +1,9 @@
 package mg.itu.prom16.object;
 
 import java.lang.reflect.Method;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 import mg.itu.prom16.utils.Mapping;
 
@@ -38,9 +40,20 @@ public class VerbMethod {
         return false;
     }
 
-    /* @Override
+    @Override
     public int hashCode() {
-        return Objects.hash(className, verbmethods);
-    } */
+        return Objects.hash(verb);
+    }
 
+
+    /* public static void main(String[] args) throws NoSuchMethodException, SecurityException, ClassNotFoundException {
+        Set<VerbMethod> sets=new HashSet<VerbMethod>();
+        VerbMethod v1=new VerbMethod();
+        v1.setVerb("GET");
+        sets.add(v1);
+        VerbMethod v2=new VerbMethod();
+        v2.setVerb("GET");
+        v2.setMethode(Class.forName("java.util.List").getMethod("size", (Class[])null));
+        System.out.println(sets.add(v2));
+    } */
 }

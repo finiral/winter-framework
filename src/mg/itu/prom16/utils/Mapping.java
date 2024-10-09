@@ -25,19 +25,4 @@ public class Mapping {
         setClassName(className);
         setVerbmethods(verbmethods);
     }
-    
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Mapping mapping = (Mapping) o;
-        return Objects.equals(className, mapping.className) && 
-               Objects.equals(verbmethods, mapping.verbmethods);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(className, verbmethods);
-    }
 }
