@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.annotations.Controller;
 import mg.itu.prom16.annotations.RestAPI;
 import mg.itu.prom16.object.ModelView;
+import mg.itu.prom16.object.ResourceNotFound;
 import mg.itu.prom16.object.VerbMethod;
 import mg.itu.prom16.utils.Mapping;
 import mg.itu.prom16.utils.Utils;
@@ -58,7 +59,7 @@ public class FrontController extends HttpServlet {
             // Prendre les parametres
             Map<String, String[]> params = request.getParameterMap();
             // Recherche methode
-            VerbMethod meth = u.searchVerbMethod(request,map, path);
+            VerbMethod meth = u.searchVerbMethod(request, map, path);
             // Execution methode
             Object res = u.execute(request, meth, map, path, params);
             /* verification si methode est rest */
@@ -66,17 +67,17 @@ public class FrontController extends HttpServlet {
                 /* Changer le type du response en json */
                 response.setContentType("application/json");
                 response.setCharacterEncoding("UTF-8");
-                Gson gson=new Gson();
+                Gson gson = new Gson();
                 /* si le type de retour nest pas modelview on return le json directement */
                 if (!(res instanceof ModelView)) {
-                    gson.toJson(res,out);
+                    gson.toJson(res, out);
                 }
                 /* si c'est model view */
                 else {
                     ModelView mv = (ModelView) res;
-                    gson.toJson(mv.getData(),out);
+                    gson.toJson(mv.getData(), out);
                 }
-                
+
             }
             /* si methode NON REST */
             else {
@@ -101,10 +102,19 @@ public class FrontController extends HttpServlet {
                     dispatcher.forward(request, response);
                 }
             }
-        } catch (Exception e) {
+        } 
+        catch(ResourceNotFound e){
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            response.getWriter().write(e.getMessage());
+            e.printStackTrace();;
+        }catch (Exception e) {
             // TODO Auto-generated catch block
             /* throw new ServletException(e); */
-            e.printStackTrace(out);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write(e.getMessage());
+            e.printStackTrace();
+
+
         }
     }
 

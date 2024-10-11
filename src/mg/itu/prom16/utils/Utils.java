@@ -25,6 +25,7 @@ import mg.itu.prom16.annotations.RestAPI;
 import mg.itu.prom16.annotations.UrlMapping;
 import mg.itu.prom16.object.ModelView;
 import mg.itu.prom16.object.MySession;
+import mg.itu.prom16.object.ResourceNotFound;
 import mg.itu.prom16.object.VerbMethod;
 
 public class Utils {
@@ -211,7 +212,7 @@ public class Utils {
                 }
             }
             if (m == null) {
-                throw new Exception("L'url ne supporte pas la méthode " + req.getMethod());
+                throw new ResourceNotFound("L'url ne supporte pas la méthode " + req.getMethod());
             }
             return m;
         } else {
