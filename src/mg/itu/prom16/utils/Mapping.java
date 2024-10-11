@@ -1,35 +1,28 @@
 package mg.itu.prom16.utils;
+import java.util.Objects;
+import java.util.Set;
 
-import java.lang.reflect.Method;
+import mg.itu.prom16.object.VerbMethod;
 
 public class Mapping {
     String className;
-    Method method;
-    String verb;
-    public String getVerb() {
-        return verb;
-    }
-    public void setVerb(String verb) {
-        this.verb = verb;
-    }
-    public Method getMethodName() {
-        return method;
-    }
-    public void setMethod(Method method) {
-        this.method = method;
-    }
+    Set<VerbMethod> verbmethods;
     public String getClassName() {
         return className;
     }
     public void setClassName(String className) {
         this.className = className;
     }
+    public Set<VerbMethod> getVerbmethods() {
+        return verbmethods;
+    }
+    public void setVerbmethods(Set<VerbMethod> verbmethods) {
+        this.verbmethods = verbmethods;
+    }
     public Mapping() {
     }
-    public Mapping(String className, Method method,String verb) {
+    public Mapping(String className, Set<VerbMethod> verbmethods) {
         setClassName(className);
-        setMethod(method);
-        setVerb(verb);
+        setVerbmethods(verbmethods);
     }
-    
 }
