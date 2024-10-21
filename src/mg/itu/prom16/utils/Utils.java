@@ -24,6 +24,7 @@ import mg.itu.prom16.annotations.Post;
 import mg.itu.prom16.annotations.RestAPI;
 import mg.itu.prom16.annotations.UrlMapping;
 import mg.itu.prom16.object.ModelView;
+import mg.itu.prom16.object.MyMultiPart;
 import mg.itu.prom16.object.MySession;
 import mg.itu.prom16.object.ResourceNotFound;
 import mg.itu.prom16.object.VerbMethod;
@@ -177,7 +178,22 @@ public class Utils {
             Class<?> typage = param.getType();
             if (typage.equals(MySession.class)) {
                 ls.add(new MySession(req.getSession()));
-            } else if (!typage.isPrimitive() && !typage.equals(String.class)) {
+            }
+
+            // teto spint 12
+            else if (typage.equals(MyMultiPart.class)) {
+                if (param.isAnnotationPresent(Param.class)
+                        && params.containsKey(param.getAnnotation(Param.class).paramName())) {
+                    key = param.getAnnotation(Param.class).paramName();
+                }else{
+                    key = param.getName();
+                }
+                ls.add(new MyMultiPart(req.getPart(key)));
+            }
+
+
+
+            else if (!typage.isPrimitive() && !typage.equals(String.class)) {
                 this.processObject(params, param, ls);
             } else {
                 if (params.containsKey(param.getName())) {
