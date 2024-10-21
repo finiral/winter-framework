@@ -11,6 +11,7 @@ import com.google.gson.Gson;
 
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,6 +23,7 @@ import mg.itu.prom16.object.VerbMethod;
 import mg.itu.prom16.utils.Mapping;
 import mg.itu.prom16.utils.Utils;
 
+@MultipartConfig
 public class FrontController extends HttpServlet {
     private List<String> controllers;
     private HashMap<String, Mapping> map;
