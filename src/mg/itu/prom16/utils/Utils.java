@@ -143,6 +143,43 @@ public class Utils {
         return request.getRequestURI().substring(request.getContextPath().length());
     }
 
+    public void validateField(Map<String, String[]> params, Field field, String key) throws Exception {
+        /// regarder si le field contient une annotation Numeric
+        /// verifier que le parametre est bien un nombre
+        /// si non, lever une exception
+        /// si oui, continuer
+        /// regarder si le field contient une annotation Range
+        /// verifier que le parametre est dans la plage et verifier qu'il soit numeric
+        /// si non, lever une exception
+        /// si oui, continuer
+        if (field.isAnnotationPresent(mg.itu.prom16.annotations.Numeric.class)) {
+            if (params.get(key) != null) {
+                try {
+                    Double.parseDouble(params.get(key)[0]);
+                } catch (Exception e) {
+                    throw new Exception("Le parametre " + key + " doit etre un nombre");
+                }
+            }
+        }
+        if (field.isAnnotationPresent(mg.itu.prom16.annotations.Range.class)) {
+            if (params.get(key) != null) {
+                try {
+                    Double.parseDouble(params.get(key)[0]);
+                    mg.itu.prom16.annotations.Range range = field
+                            .getAnnotation(mg.itu.prom16.annotations.Range.class);
+                    if (Double.parseDouble(params.get(key)[0]) < range.min()
+                            || Double.parseDouble(params.get(key)[0]) > range.max()) {
+                        throw new Exception("Le parametre " + key + " doit etre dans la plage [" + range.min() + ","
+                                + range.max() + "]");
+                    }
+                } catch (Exception e) {
+                    throw new Exception("Le parametre " + key + " doit etre un nombre");
+                }
+            }
+        }
+
+    }
+
     public void processObject(Map<String, String[]> params, Parameter param, List<Object> ls) throws Exception {
         String key = null;
         Class<?> c = param.getType();
@@ -158,6 +195,8 @@ public class Utils {
                     ? field.getAnnotation(FieldParam.class).paramName()
                     : field.getName();
             key = nomObjet + "." + attributObjet;
+            /// ATOMBOKA eto sprint 13
+            validateField(params, field, key);
             Method setters = c.getDeclaredMethod(setCatMethodName(attributObjet), field.getType());
             if (key == null || params.get(key) == null) {
                 setters.invoke(o, this.parse(null, field.getType()));
@@ -185,13 +224,11 @@ public class Utils {
                 if (param.isAnnotationPresent(Param.class)
                         && params.containsKey(param.getAnnotation(Param.class).paramName())) {
                     key = param.getAnnotation(Param.class).paramName();
-                }else{
+                } else {
                     key = param.getName();
                 }
                 ls.add(new MyMultiPart(req.getPart(key)));
             }
-
-
 
             else if (!typage.isPrimitive() && !typage.equals(String.class)) {
                 this.processObject(params, param, ls);
@@ -267,7 +304,7 @@ public class Utils {
         Mapping m = map.get(path);
         // Verification REQUETE VERB
         if (req.getMethod().equals(verbmethode.getVerb())) {
-            Method methode=verbmethode.getMethode();
+            Method methode = verbmethode.getMethode();
             Class<?> classe = Class.forName(m.getClassName());
             Object appelant = classe.getDeclaredConstructor().newInstance((Object[]) null);
             for (Field field : classe.getDeclaredFields()) {
@@ -280,7 +317,8 @@ public class Utils {
 
         } else {
             throw new Exception(
-                    "La requete est de type " + req.getMethod() + " alors que la methode est de type " + verbmethode.getVerb());
+                    "La requete est de type " + req.getMethod() + " alors que la methode est de type "
+                            + verbmethode.getVerb());
         }
         return res;
 
