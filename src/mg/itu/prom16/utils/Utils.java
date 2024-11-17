@@ -18,11 +18,15 @@ import jakarta.servlet.http.HttpServletRequest;
 import mg.itu.prom16.annotations.Controller;
 import mg.itu.prom16.annotations.FieldParam;
 import mg.itu.prom16.annotations.Get;
+import mg.itu.prom16.annotations.Numeric;
 import mg.itu.prom16.annotations.ObjectParam;
 import mg.itu.prom16.annotations.Param;
 import mg.itu.prom16.annotations.Post;
+import mg.itu.prom16.annotations.Range;
 import mg.itu.prom16.annotations.RestAPI;
 import mg.itu.prom16.annotations.UrlMapping;
+import mg.itu.prom16.exceptions.NumericException;
+import mg.itu.prom16.exceptions.RangeException;
 import mg.itu.prom16.object.ModelView;
 import mg.itu.prom16.object.MyMultiPart;
 import mg.itu.prom16.object.MySession;
@@ -144,36 +148,28 @@ public class Utils {
     }
 
     public void validateField(Map<String, String[]> params, Field field, String key) throws Exception {
-        /// regarder si le field contient une annotation Numeric
-        /// verifier que le parametre est bien un nombre
-        /// si non, lever une exception
-        /// si oui, continuer
-        /// regarder si le field contient une annotation Range
-        /// verifier que le parametre est dans la plage et verifier qu'il soit numeric
-        /// si non, lever une exception
-        /// si oui, continuer
-        if (field.isAnnotationPresent(mg.itu.prom16.annotations.Numeric.class)) {
+        // Check if the field has a Numeric annotation
+        if (field.isAnnotationPresent(Numeric.class)) {
             if (params.get(key) != null) {
                 try {
                     Double.parseDouble(params.get(key)[0]);
                 } catch (Exception e) {
-                    throw new Exception("Le parametre " + key + " doit etre un nombre");
+                    throw new NumericException(key);
                 }
             }
         }
-        if (field.isAnnotationPresent(mg.itu.prom16.annotations.Range.class)) {
+        // Check if the field has a Range annotation
+        if (field.isAnnotationPresent(Range.class)) {
             if (params.get(key) != null) {
                 try {
                     Double.parseDouble(params.get(key)[0]);
-                    mg.itu.prom16.annotations.Range range = field
-                            .getAnnotation(mg.itu.prom16.annotations.Range.class);
-                    if (Double.parseDouble(params.get(key)[0]) < range.min()
-                            || Double.parseDouble(params.get(key)[0]) > range.max()) {
-                        throw new Exception("Le parametre " + key + " doit etre dans la plage [" + range.min() + ","
-                                + range.max() + "]");
+                    Range range = field.getAnnotation(Range.class);
+                    double value = Double.parseDouble(params.get(key)[0]);
+                    if (value < range.min() || value > range.max()) {
+                        throw new RangeException(key, range);
                     }
                 } catch (Exception e) {
-                    throw new Exception("Le parametre " + key + " doit etre un nombre");
+                    throw new NumericException(key);
                 }
             }
         }
