@@ -163,14 +163,15 @@ public class Utils {
             if (params.get(key) != null) {
                 try {
                     Double.parseDouble(params.get(key)[0]);
-                    Range range = field.getAnnotation(Range.class);
-                    double value = Double.parseDouble(params.get(key)[0]);
-                    if (value < range.min() || value > range.max()) {
-                        throw new RangeException(key, range);
-                    }
                 } catch (Exception e) {
                     throw new NumericException(key);
                 }
+                Range range = field.getAnnotation(Range.class);
+                double value = Double.parseDouble(params.get(key)[0]);
+                if (value < range.min() || value > range.max()) {
+                    throw new RangeException(key, range);
+                }
+
             }
         }
     }
