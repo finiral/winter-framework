@@ -18,11 +18,15 @@ import jakarta.servlet.http.HttpServletRequest;
 import mg.itu.prom16.annotations.Controller;
 import mg.itu.prom16.annotations.FieldParam;
 import mg.itu.prom16.annotations.Get;
+import mg.itu.prom16.annotations.Numeric;
 import mg.itu.prom16.annotations.ObjectParam;
 import mg.itu.prom16.annotations.Param;
 import mg.itu.prom16.annotations.Post;
+import mg.itu.prom16.annotations.Range;
 import mg.itu.prom16.annotations.RestAPI;
 import mg.itu.prom16.annotations.UrlMapping;
+import mg.itu.prom16.exceptions.NumericException;
+import mg.itu.prom16.exceptions.RangeException;
 import mg.itu.prom16.object.ModelView;
 import mg.itu.prom16.object.MyMultiPart;
 import mg.itu.prom16.object.MySession;
@@ -143,6 +147,35 @@ public class Utils {
         return request.getRequestURI().substring(request.getContextPath().length());
     }
 
+    public void validateField(Map<String, String[]> params, Field field, String key) throws Exception {
+        // Check if the field has a Numeric annotation
+        if (field.isAnnotationPresent(Numeric.class)) {
+            if (params.get(key) != null) {
+                try {
+                    Double.parseDouble(params.get(key)[0]);
+                } catch (Exception e) {
+                    throw new NumericException(key);
+                }
+            }
+        }
+        // Check if the field has a Range annotation
+        if (field.isAnnotationPresent(Range.class)) {
+            if (params.get(key) != null) {
+                try {
+                    Double.parseDouble(params.get(key)[0]);
+                } catch (Exception e) {
+                    throw new NumericException(key);
+                }
+                Range range = field.getAnnotation(Range.class);
+                double value = Double.parseDouble(params.get(key)[0]);
+                if (value < range.min() || value > range.max()) {
+                    throw new RangeException(key, range);
+                }
+
+            }
+        }
+    }
+
     public void processObject(Map<String, String[]> params, Parameter param, List<Object> ls) throws Exception {
         String key = null;
         Class<?> c = param.getType();
@@ -158,6 +191,8 @@ public class Utils {
                     ? field.getAnnotation(FieldParam.class).paramName()
                     : field.getName();
             key = nomObjet + "." + attributObjet;
+            /// ATOMBOKA eto sprint 13
+            validateField(params, field, key);
             Method setters = c.getDeclaredMethod(setCatMethodName(attributObjet), field.getType());
             if (key == null || params.get(key) == null) {
                 setters.invoke(o, this.parse(null, field.getType()));
@@ -185,13 +220,11 @@ public class Utils {
                 if (param.isAnnotationPresent(Param.class)
                         && params.containsKey(param.getAnnotation(Param.class).paramName())) {
                     key = param.getAnnotation(Param.class).paramName();
-                }else{
+                } else {
                     key = param.getName();
                 }
                 ls.add(new MyMultiPart(req.getPart(key)));
             }
-
-
 
             else if (!typage.isPrimitive() && !typage.equals(String.class)) {
                 this.processObject(params, param, ls);
@@ -267,7 +300,7 @@ public class Utils {
         Mapping m = map.get(path);
         // Verification REQUETE VERB
         if (req.getMethod().equals(verbmethode.getVerb())) {
-            Method methode=verbmethode.getMethode();
+            Method methode = verbmethode.getMethode();
             Class<?> classe = Class.forName(m.getClassName());
             Object appelant = classe.getDeclaredConstructor().newInstance((Object[]) null);
             for (Field field : classe.getDeclaredFields()) {
@@ -280,7 +313,8 @@ public class Utils {
 
         } else {
             throw new Exception(
-                    "La requete est de type " + req.getMethod() + " alors que la methode est de type " + verbmethode.getVerb());
+                    "La requete est de type " + req.getMethod() + " alors que la methode est de type "
+                            + verbmethode.getVerb());
         }
         return res;
 
