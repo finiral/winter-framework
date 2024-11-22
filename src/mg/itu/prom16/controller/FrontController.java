@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.itu.prom16.annotations.Controller;
 import mg.itu.prom16.annotations.RestAPI;
+import mg.itu.prom16.exceptions.ValidationException;
 import mg.itu.prom16.object.ModelView;
 import mg.itu.prom16.object.ResourceNotFound;
 import mg.itu.prom16.object.VerbMethod;
@@ -79,7 +80,6 @@ public class FrontController extends HttpServlet {
                     ModelView mv = (ModelView) res;
                     gson.toJson(mv.getData(), out);
                 }
-
             }
             /* si methode NON REST */
             else {
@@ -104,19 +104,31 @@ public class FrontController extends HttpServlet {
                     dispatcher.forward(request, response);
                 }
             }
-        } 
-        catch(ResourceNotFound e){
+        } catch (ValidationException e) {
+            // Récupère l'URL du "referer" (lien précédent utilisé)
+            String referer = request.getHeader("referer");
+
+            // Supprime le contextPath pour obtenir un chemin relatif
+            String contextPath = request.getContextPath();
+            String relativePath = referer != null && referer.startsWith(contextPath)
+                    ? referer.substring(contextPath.length())
+                    : referer;
+
+            // Ajoute les erreurs de validation dans l'attribut de la requête
+            request.setAttribute("validationErrors", e.getErrorMap());
+            // Effectue le redispatch vers le chemin relatif
+            /* RequestDispatcher dispatcher = request.getRequestDispatcher(relativePath);
+            dispatcher.forward(request, response); */
+        } catch (ResourceNotFound e) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             response.getWriter().write(e.getMessage());
-            e.printStackTrace();;
-        }catch (Exception e) {
+            e.printStackTrace();
+        } catch (Exception e) {
             // TODO Auto-generated catch block
             /* throw new ServletException(e); */
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().write(e.getMessage());
             e.printStackTrace();
-
-
         }
     }
 

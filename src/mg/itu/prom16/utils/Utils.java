@@ -27,6 +27,7 @@ import mg.itu.prom16.annotations.RestAPI;
 import mg.itu.prom16.annotations.UrlMapping;
 import mg.itu.prom16.exceptions.NumericException;
 import mg.itu.prom16.exceptions.RangeException;
+import mg.itu.prom16.exceptions.ValidationException;
 import mg.itu.prom16.object.ModelView;
 import mg.itu.prom16.object.MyMultiPart;
 import mg.itu.prom16.object.MySession;
@@ -146,15 +147,19 @@ public class Utils {
     public String getURIWithoutContextPath(HttpServletRequest request) {
         return request.getRequestURI().substring(request.getContextPath().length());
     }
-
-    public void validateField(Map<String, String[]> params, Field field, String key) throws Exception {
+    public void validateField(Map<String, String[]> params, Field field, String key) throws ValidationException {
+        Map<String, List<String>> errorMap = new HashMap<>();
+    
         // Check if the field has a Numeric annotation
         if (field.isAnnotationPresent(Numeric.class)) {
             if (params.get(key) != null) {
                 try {
                     Double.parseDouble(params.get(key)[0]);
                 } catch (Exception e) {
-                    throw new NumericException(key);
+                    if (!errorMap.containsKey("error_" + key)) {
+                        errorMap.put("error_" + key, new ArrayList<>());
+                    }
+                    errorMap.get("error_" + key).add(new NumericException(key).getMessage());
                 }
             }
         }
@@ -164,17 +169,28 @@ public class Utils {
                 try {
                     Double.parseDouble(params.get(key)[0]);
                 } catch (Exception e) {
-                    throw new NumericException(key);
+                    if (!errorMap.containsKey("error_" + key)) {
+                        errorMap.put("error_" + key, new ArrayList<>());
+                    }
+                    errorMap.get("error_" + key).add(new NumericException(key).getMessage());
                 }
                 Range range = field.getAnnotation(Range.class);
                 double value = Double.parseDouble(params.get(key)[0]);
                 if (value < range.min() || value > range.max()) {
-                    throw new RangeException(key, range);
+                    if (!errorMap.containsKey("error_" + key)) {
+                        errorMap.put("error_" + key, new ArrayList<>());
+                    }
+                    errorMap.get("error_" + key).add(new RangeException(key, range).getMessage());
                 }
-
             }
         }
+        // If there are any errors, throw a ValidationException
+        if (!errorMap.isEmpty()) {
+            throw new ValidationException(errorMap);
+        }
     }
+    
+    
 
     public void processObject(Map<String, String[]> params, Parameter param, List<Object> ls) throws Exception {
         String key = null;
