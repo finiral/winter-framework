@@ -105,20 +105,7 @@ public class FrontController extends HttpServlet {
                 }
             }
         } catch (ValidationException e) {
-            // Récupère l'URL du "referer" (lien précédent utilisé)
-            String referer = request.getHeader("referer");
-
-            // Supprime le contextPath pour obtenir un chemin relatif
-            String contextPath = request.getContextPath();
-            String relativePath = referer != null && referer.startsWith(contextPath)
-                    ? referer.substring(contextPath.length())
-                    : referer;
-
-            // Ajoute les erreurs de validation dans l'attribut de la requête
             request.setAttribute("validationErrors", e.getErrorMap());
-            // Effectue le redispatch vers le chemin relatif
-            /* RequestDispatcher dispatcher = request.getRequestDispatcher(relativePath);
-            dispatcher.forward(request, response); */
         } catch (ResourceNotFound e) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             response.getWriter().write(e.getMessage());
