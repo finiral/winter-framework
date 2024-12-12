@@ -147,19 +147,15 @@ public class Utils {
     public String getURIWithoutContextPath(HttpServletRequest request) {
         return request.getRequestURI().substring(request.getContextPath().length());
     }
-    public void validateField(Map<String, String[]> params, Field field, String key) throws ValidationException {
-        Map<String, List<String>> errorMap = new HashMap<>();
-    
+    public List<String> validateField(Map<String, String[]> params, Field field, String key) {
+        List<String> errors=new ArrayList<>();
         // Check if the field has a Numeric annotation
         if (field.isAnnotationPresent(Numeric.class)) {
             if (params.get(key) != null) {
                 try {
                     Double.parseDouble(params.get(key)[0]);
                 } catch (Exception e) {
-                    if (!errorMap.containsKey("error_" + key)) {
-                        errorMap.put("error_" + key, new ArrayList<>());
-                    }
-                    errorMap.get("error_" + key).add(new NumericException(key).getMessage());
+                    errors.add(new NumericException(key).getMessage());
                 }
             }
         }
@@ -169,30 +165,22 @@ public class Utils {
                 try {
                     Double.parseDouble(params.get(key)[0]);
                 } catch (Exception e) {
-                    if (!errorMap.containsKey("error_" + key)) {
-                        errorMap.put("error_" + key, new ArrayList<>());
-                    }
-                    errorMap.get("error_" + key).add(new NumericException(key).getMessage());
+                    errors.add(new NumericException(key).getMessage());
                 }
                 Range range = field.getAnnotation(Range.class);
                 double value = Double.parseDouble(params.get(key)[0]);
                 if (value < range.min() || value > range.max()) {
-                    if (!errorMap.containsKey("error_" + key)) {
-                        errorMap.put("error_" + key, new ArrayList<>());
-                    }
-                    errorMap.get("error_" + key).add(new RangeException(key, range).getMessage());
+                    errors.add(new RangeException(key, range).getMessage());
                 }
             }
         }
-        // If there are any errors, throw a ValidationException
-        if (!errorMap.isEmpty()) {
-            throw new ValidationException(errorMap);
-        }
+        return errors;
     }
     
     
 
     public void processObject(Map<String, String[]> params, Parameter param, List<Object> ls) throws Exception {
+        Map<String, List<String>> errorMap = new HashMap<>();
         String key = null;
         Class<?> c = param.getType();
         String nomObjet = null;
@@ -201,14 +189,27 @@ public class Utils {
         Object o = c.getConstructor((Class[]) null).newInstance((Object[]) null);
         /// prendre les attributs
         Field[] f = c.getDeclaredFields();
+        /// ATOMBOKA eto sprint 13
+        /// validation des fields 
+        for(Field field:f){
+            String attributObjet = null;
+            attributObjet = field.isAnnotationPresent(FieldParam.class)
+                    ? field.getAnnotation(FieldParam.class).paramName()
+                    : field.getName();
+            key = nomObjet + "." + attributObjet;
+            if(validateField(params, field, key).size()>0){
+                errorMap.put(key, validateField(params, field, key));
+            }
+        }
+        if(!errorMap.isEmpty()){
+            throw new ValidationException(errorMap);
+        }
         for (Field field : f) {
             String attributObjet = null;
             attributObjet = field.isAnnotationPresent(FieldParam.class)
                     ? field.getAnnotation(FieldParam.class).paramName()
                     : field.getName();
             key = nomObjet + "." + attributObjet;
-            /// ATOMBOKA eto sprint 13
-            validateField(params, field, key);
             Method setters = c.getDeclaredMethod(setCatMethodName(attributObjet), field.getType());
             if (key == null || params.get(key) == null) {
                 setters.invoke(o, this.parse(null, field.getType()));
