@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 
 import jakarta.servlet.http.HttpServletRequest;
 import mg.itu.prom16.annotations.Controller;
+import mg.itu.prom16.annotations.ErrorUrl;
 import mg.itu.prom16.annotations.FieldParam;
 import mg.itu.prom16.annotations.Get;
 import mg.itu.prom16.annotations.Numeric;
@@ -325,7 +326,19 @@ public class Utils {
                             new MySession(req.getSession()));
                 }
             }
-            res = methode.invoke(appelant, this.getArgs(req, params, methode));
+            
+            Object[] args = null;
+            try{
+                args = this.getArgs(req, params, methode);
+            }
+            catch(ValidationException ve){
+                if(methode.isAnnotationPresent(ErrorUrl.class)){
+                    ve.setErrorUrl(methode.getAnnotation(ErrorUrl.class).url());
+                    ve.setErrorMethod(methode.getAnnotation(ErrorUrl.class).method());
+                }
+                throw ve;
+            }
+            res = methode.invoke(appelant,args);
 
         } else {
             throw new Exception(

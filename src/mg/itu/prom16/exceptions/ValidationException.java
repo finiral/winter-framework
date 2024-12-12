@@ -6,6 +6,8 @@ import java.util.stream.Collectors;
 
 public class ValidationException extends Exception {
     private Map<String, List<String>> errorMap;
+    String errorUrl; /* url de destination en cas d'erreur */
+    String errorMethod; /* methode de destination en cas d'erreur */
 
     public ValidationException(Map<String, List<String>> errorMap) {
         super("Validation failed");
@@ -14,6 +16,21 @@ public class ValidationException extends Exception {
 
     public Map<String, List<String>> getErrorMap() {
         return errorMap;
+    }
+    public String getErrorMethod() {
+        if(this.errorMethod==null){
+            return "GET";
+        }
+        return errorMethod;
+    }
+    public void setErrorMethod(String errorMethod) {
+        this.errorMethod = errorMethod;
+    }
+    public String getErrorUrl() {
+        return errorUrl;
+    }
+    public void setErrorUrl(String errorUrl) {
+        this.errorUrl = errorUrl;
     }
 
     @Override

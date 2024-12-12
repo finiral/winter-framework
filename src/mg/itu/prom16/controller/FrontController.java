@@ -106,30 +106,23 @@ public class FrontController extends HttpServlet {
                 }
             }
         } catch (ValidationException e) {
-            if (res instanceof ModelView) {
-                ModelView mv = (ModelView) res;
-                String errorUrl = mv.getErrorUrl();
-                String errorMethod = mv.getErrorMethod();
-                if (errorUrl != null) {
-                    // Create a new HttpServletRequestWrapper to modify the request method
-                    HttpServletRequestWrapper wrappedRequest = new HttpServletRequestWrapper(request) {
-                        @Override
-                        public String getMethod() {
-                            return errorMethod;
-                        }
-                    };
+            String errorUrl = e.getErrorUrl();
+            String errorMethod = e.getErrorMethod();
+            if (errorUrl != null) {
+                // Create a new HttpServletRequestWrapper to modify the request method
+                HttpServletRequestWrapper wrappedRequest = new HttpServletRequestWrapper(request) {
+                    @Override
+                    public String getMethod() {
+                        return errorMethod;
+                    }
+                };
 
-                    // Add the errors to the new request attributes
-                    wrappedRequest.setAttribute("errors", e.getErrorMap());
+                // Add the errors to the new request attributes
+                wrappedRequest.setAttribute("errors", e.getErrorMap());
 
-                    // Dispatch the new request to errorUrl
-                    RequestDispatcher dispatcher = wrappedRequest.getRequestDispatcher(errorUrl);
-                    dispatcher.forward(wrappedRequest, response);
-                } else {
-                    // Print the errors directly
-                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    response.getWriter().write(e.getMessage());
-                }
+                // Dispatch the new request to errorUrl
+                RequestDispatcher dispatcher = wrappedRequest.getRequestDispatcher(errorUrl);
+                dispatcher.forward(wrappedRequest, response);
             } else {
                 // Print the errors directly
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
