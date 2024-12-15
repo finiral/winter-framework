@@ -8,7 +8,7 @@ public class ValidationException extends Exception {
     private Map<String, List<String>> errorMap;
     String errorUrl; /* url de destination en cas d'erreur */
     String errorMethod; /* methode de destination en cas d'erreur */
-
+    Map<String, String[]> paramsBeforeError ; /* parametres de la requete avant erreur*/
     public ValidationException(Map<String, List<String>> errorMap) {
         super("Validation failed");
         this.errorMap = errorMap;
@@ -38,5 +38,17 @@ public class ValidationException extends Exception {
         return errorMap.entrySet().stream()
                 .map(entry -> entry.getKey() + ": " + String.join(", ", entry.getValue()))
                 .collect(Collectors.joining("; "));
+    }
+
+    public void setErrorMap(Map<String, List<String>> errorMap) {
+        this.errorMap = errorMap;
+    }
+
+    public Map<String, String[]> getParamsBeforeError() {
+        return paramsBeforeError;
+    }
+
+    public void setParamsBeforeError(Map<String, String[]> paramsBeforeError) {
+        this.paramsBeforeError = paramsBeforeError;
     }
 }

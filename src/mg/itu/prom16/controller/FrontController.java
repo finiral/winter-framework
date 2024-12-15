@@ -119,7 +119,7 @@ public class FrontController extends HttpServlet {
 
                 // Add the errors to the new request attributes
                 wrappedRequest.setAttribute("errors", e.getErrorMap());
-
+                wrappedRequest.setAttribute("params", e.getParamsBeforeError());
                 // Dispatch the new request to errorUrl
                 RequestDispatcher dispatcher = wrappedRequest.getRequestDispatcher(errorUrl);
                 dispatcher.forward(wrappedRequest, response);

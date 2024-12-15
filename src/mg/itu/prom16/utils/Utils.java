@@ -190,7 +190,7 @@ public class Utils {
         /// prendre les attributs
         Field[] f = c.getDeclaredFields();
         /// ATOMBOKA eto sprint 13
-        /// validation des fields 
+    /// validation des fields 
         for(Field field:f){
             String attributObjet = null;
             attributObjet = field.isAnnotationPresent(FieldParam.class)
@@ -285,31 +285,6 @@ public class Utils {
             throw new Exception("Aucune méthode associé a cette url");
         }
     }
-
-    // public Object searchExecute(HttpServletRequest req, HashMap<String, Mapping>
-    // map, String path,
-    // Map<String, String[]> params)
-    // throws Exception {
-    // Method methode = this.searchMethod(map, path);
-    // Mapping m = map.get(path);
-    // Class<?> classe = Class.forName(m.getClassName());
-    // Object appelant = classe.getDeclaredConstructor().newInstance((Object[])
-    // null);
-    // for (Field field : classe.getDeclaredFields()) {
-    // if (field.getType().equals(MySession.class)) {
-    // classe.getMethod(setCatMethodName(field.getName()),
-    // MySession.class).invoke(appelant,
-    // new MySession(req.getSession()));
-    // }
-    // }
-    // Object res = methode.invoke(appelant, this.getArgs(req, params, methode));
-    // if (!(res instanceof String) && !(res instanceof ModelView)) {
-    // throw new Exception("La méthode " + methode.getName() + " ne retourne ni
-    // String ni ModelView");
-    // }
-    // return res;
-    // }
-
     public Object execute(HttpServletRequest req, VerbMethod verbmethode, HashMap<String, Mapping> map, String path,
             Map<String, String[]> params)
             throws Exception {
@@ -336,6 +311,7 @@ public class Utils {
                     ve.setErrorUrl(methode.getAnnotation(ErrorUrl.class).url());
                     ve.setErrorMethod(methode.getAnnotation(ErrorUrl.class).method());
                 }
+                ve.setParamsBeforeError(params);
                 throw ve;
             }
             res = methode.invoke(appelant,args);
