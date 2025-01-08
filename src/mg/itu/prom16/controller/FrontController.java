@@ -29,16 +29,22 @@ import mg.itu.prom16.utils.Utils;
 public class FrontController extends HttpServlet {
     private List<String> controllers;
     private HashMap<String, Mapping> map;
+    private String authVarName;
+    private String authRoleVarName;
 
     @Override
     public void init() throws ServletException {
         String packageToScan = this.getInitParameter("package_name");
-        try {
-            this.controllers = new Utils().getAllClassesStringAnnotation(packageToScan, Controller.class);
-            this.map = new Utils().scanControllersMethods(this.controllers);
-        } catch (Exception e) {
-            throw new ServletException(e);
+        if(packageToScan!=null){
+            try {
+                this.controllers = new Utils().getAllClassesStringAnnotation(packageToScan, Controller.class);
+                this.map = new Utils().scanControllersMethods(this.controllers);
+            } catch (Exception e) {
+                throw new ServletException(e);
+            }
         }
+        this.authVarName=this.getInitParameter("auth_name");
+        this.authRoleVarName=this.getInitParameter("auth_role_name");
     }
 
     @Override

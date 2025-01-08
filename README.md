@@ -6,8 +6,7 @@ Framework comme Spring
     - Dans le web.xml de votre projet , définir le servlet FrontController , avec la classe mg.itu.prom16.controller.FrontController
     - Définir son init-param avec le param-name package_name et avec le param-value qui sera le package ou se trouvera vos controllers.
     - Définir l'urlmapping du FrontController , qui sera /
-	- Définir aussi dans le FrontController , le nom de la variable d'authorisation dans la session , avec param-name
-	auth_name et si on veut gérer les role on ajoute param-name auth_role_name
+	- Définir aussi dans le FrontController , le nom de la variable d'authorisation dans la session , avec comme param-name auth_name et si on veut gérer les role on ajoute param-name auth_role_name
 
 ### Exemple :
     <servlet>
