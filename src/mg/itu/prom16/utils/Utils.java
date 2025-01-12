@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import jakarta.servlet.http.HttpServletRequest;
+import mg.itu.prom16.annotations.Auth;
 import mg.itu.prom16.annotations.Controller;
 import mg.itu.prom16.annotations.ErrorUrl;
 import mg.itu.prom16.annotations.FieldParam;

@@ -16,6 +16,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
+import mg.itu.prom16.annotations.Auth;
 import mg.itu.prom16.annotations.Controller;
 import mg.itu.prom16.annotations.RestAPI;
 import mg.itu.prom16.exceptions.ValidationException;
@@ -35,7 +36,7 @@ public class FrontController extends HttpServlet {
     @Override
     public void init() throws ServletException {
         String packageToScan = this.getInitParameter("package_name");
-        if(packageToScan!=null){
+        if (packageToScan != null) {
             try {
                 this.controllers = new Utils().getAllClassesStringAnnotation(packageToScan, Controller.class);
                 this.map = new Utils().scanControllersMethods(this.controllers);
@@ -43,8 +44,8 @@ public class FrontController extends HttpServlet {
                 throw new ServletException(e);
             }
         }
-        this.authVarName=this.getInitParameter("auth_name");
-        this.authRoleVarName=this.getInitParameter("auth_role_name");
+        this.authVarName = this.getInitParameter("auth_name");
+        this.authRoleVarName = this.getInitParameter("auth_role_name");
     }
 
     @Override
@@ -70,6 +71,16 @@ public class FrontController extends HttpServlet {
             Map<String, String[]> params = request.getParameterMap();
             // Recherche methode
             VerbMethod meth = u.searchVerbMethod(request, map, path);
+            if (meth.getMethode().isAnnotationPresent(Auth.class)) {
+                if (request.getSession().getAttribute(this.authVarName) == null) {
+                    throw new ResourceNotFound("Vous n'etes pas connecte");
+                }
+                if (meth.getMethode().getAnnotation(Auth.class).authRole() != request.getSession()
+                        .getAttribute(this.authRoleVarName)) {
+                    throw new ResourceNotFound("Vous n'avez pas le role necessaire");
+                }
+
+            }
             // Execution methode
             res = u.execute(request, meth, map, path, params);
             /* verification si methode est rest */
