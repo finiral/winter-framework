@@ -8,5 +8,5 @@ import java.lang.annotation.RetentionPolicy;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Auth {
-    String authRole();
+    String authRole() default "";
 }
