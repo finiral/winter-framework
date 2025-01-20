@@ -82,7 +82,6 @@ public class FrontController extends HttpServlet {
                         throw new ResourceNotFound("Vous n'avez pas le role necessaire");
                     }
                 }
-
             }
             // Execution methode
             res = u.execute(request, meth, map, path, params);
