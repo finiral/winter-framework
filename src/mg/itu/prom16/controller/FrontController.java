@@ -75,9 +75,10 @@ public class FrontController extends HttpServlet {
                 if (request.getSession().getAttribute(this.authVarName) == null) {
                     throw new ResourceNotFound("Vous n'etes pas connecte");
                 }
-                if (meth.getMethode().getAnnotation(Auth.class).authRole() != "") {
-                    if (!request.getSession().getAttribute(this.authRoleVarName)
-                            .equals(meth.getMethode().getAnnotation(Auth.class).authRole())) {
+                if (!meth.getMethode().getAnnotation(Auth.class).authRole().equals("")) {
+                    if (request.getSession().getAttribute(this.authRoleVarName) == null ||
+                            !request.getSession().getAttribute(this.authRoleVarName)
+                                    .equals(meth.getMethode().getAnnotation(Auth.class).authRole())) {
                         throw new ResourceNotFound("Vous n'avez pas le role necessaire");
                     }
                 }
