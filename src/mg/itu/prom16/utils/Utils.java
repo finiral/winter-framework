@@ -244,6 +244,37 @@ public class Utils {
                 ls.add(new MyMultiPart(req.getPart(key)));
             }
 
+            // fix tableau
+            if (typage.isArray()) {
+                if (typage.getComponentType().isPrimitive()||typage.getComponentType().equals(String.class)) {
+                    if (param.isAnnotationPresent(Param.class)
+                    && params.containsKey(param.getAnnotation(Param.class).paramName())) {
+                        key = param.getAnnotation(Param.class).paramName();
+                    } else {
+                        key = param.getName();
+                    }
+                    if (typage.equals(int[].class)) {
+                        String[] values = params.get(key);
+                        int[] tab = new int[values.length];
+                        for (int i = 0; i < values.length; i++) {
+                            tab[i] = Integer.parseInt(values[i]);
+                        }
+                        ls.add(tab);
+                    }
+                    if (typage.equals(double[].class)) {
+                        String[] values = params.get(key);
+                        double[] tab = new double[values.length];
+                        for (int i = 0; i < values.length; i++) {
+                            tab[i] = Double.parseDouble(values[i]);
+                        }
+                        ls.add(tab);   
+                    }
+                    if (typage.equals(String[].class)) {
+                        ls.add(params.get(key));
+                    }
+
+                }
+            }
             else if (!typage.isPrimitive() && !typage.equals(String.class)) {
                 this.processObject(params, param, ls);
             } else {
@@ -288,7 +319,7 @@ public class Utils {
             }
             return m;
         } else {
-            throw new Exception("Aucune méthode associé a cette url");
+            throw new Exception("Aucune méthode associé a cette url : "+path);
         }
     }
 
