@@ -79,7 +79,6 @@ public class Utils {
 
         } else if (typage.equals(long.class)) {
             return o != null ? Long.parseLong((String) o) : 0;
-
         }
         return typage.cast(o);
     }
@@ -246,36 +245,8 @@ public class Utils {
 
             // fix tableau
             if (typage.isArray()) {
-                if (typage.getComponentType().isPrimitive()||typage.getComponentType().equals(String.class)) {
-                    if (param.isAnnotationPresent(Param.class)
-                    && params.containsKey(param.getAnnotation(Param.class).paramName())) {
-                        key = param.getAnnotation(Param.class).paramName();
-                    } else {
-                        key = param.getName();
-                    }
-                    if (typage.equals(int[].class)) {
-                        String[] values = params.get(key);
-                        int[] tab = new int[values.length];
-                        for (int i = 0; i < values.length; i++) {
-                            tab[i] = Integer.parseInt(values[i]);
-                        }
-                        ls.add(tab);
-                    }
-                    if (typage.equals(double[].class)) {
-                        String[] values = params.get(key);
-                        double[] tab = new double[values.length];
-                        for (int i = 0; i < values.length; i++) {
-                            tab[i] = Double.parseDouble(values[i]);
-                        }
-                        ls.add(tab);   
-                    }
-                    if (typage.equals(String[].class)) {
-                        ls.add(params.get(key));
-                    }
-
-                }
-            }
-            else if (!typage.isPrimitive() && !typage.equals(String.class)) {
+                processArray(typage, key, param, params, ls);
+            } else if (!typage.isPrimitive() && !typage.equals(String.class)) {
                 this.processObject(params, param, ls);
             } else {
                 if (params.containsKey(param.getName())) {
@@ -298,11 +269,42 @@ public class Utils {
         return ls.toArray();
     }
 
+    public void processArray(Class<?> typage, String key, Parameter param, Map<String, String[]> params,
+            List<Object> ls) {
+        if (typage.getComponentType().isPrimitive() || typage.getComponentType().equals(String.class)) {
+            if (param.isAnnotationPresent(Param.class)
+                    && params.containsKey(param.getAnnotation(Param.class).paramName())) {
+                key = param.getAnnotation(Param.class).paramName();
+            } else {
+                key = param.getName();
+            }
+            if (typage.equals(int[].class)) {
+                String[] values = params.get(key);
+                int[] tab = new int[values.length];
+                for (int i = 0; i < values.length; i++) {
+                    tab[i] = Integer.parseInt(values[i]);
+                }
+                ls.add(tab);
+            }
+            if (typage.equals(double[].class)) {
+                String[] values = params.get(key);
+                double[] tab = new double[values.length];
+                for (int i = 0; i < values.length; i++) {
+                    tab[i] = Double.parseDouble(values[i]);
+                }
+                ls.add(tab);
+            }
+            if (typage.equals(String[].class)) {
+                ls.add(params.get(key));
+            }
+        }
+    }
+
     public VerbMethod searchVerbMethod(HttpServletRequest req, HashMap<String, Mapping> map, String path,
             String authVar, String authRole)
             throws Exception {
         if (map.containsKey(path)) {
-            boolean did=verifAuthController(map.get(path), req, authVar, authRole);
+            boolean did = verifAuthController(map.get(path), req, authVar, authRole);
             VerbMethod[] verb_meths = (VerbMethod[]) map.get(path).getVerbmethods().toArray(new VerbMethod[0]);
             VerbMethod m = null;
             for (VerbMethod verbMethod : verb_meths) {
@@ -314,12 +316,12 @@ public class Utils {
             if (m == null) {
                 throw new ResourceNotFound("L'url ne supporte pas la méthode " + req.getMethod());
             }
-            if(!did){
+            if (!did) {
                 verifAuthMethode(m, req, authVar, authRole);
             }
             return m;
         } else {
-            throw new Exception("Aucune méthode associé a cette url : "+path);
+            throw new Exception("Aucune méthode associé a cette url : " + path);
         }
     }
 
@@ -377,7 +379,8 @@ public class Utils {
         }
     }
 
-    public boolean verifAuthController(Mapping m, HttpServletRequest request, String authVarName, String authRoleVarName)
+    public boolean verifAuthController(Mapping m, HttpServletRequest request, String authVarName,
+            String authRoleVarName)
             throws ResourceNotFound, ClassNotFoundException {
         Class<?> meth = Class.forName(m.getClassName());
         if (meth.isAnnotationPresent(AuthC.class)) {
