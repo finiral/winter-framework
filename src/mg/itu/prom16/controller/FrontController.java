@@ -72,7 +72,7 @@ public class FrontController extends HttpServlet {
             // Prendre les parametres
             Map<String, String[]> params = request.getParameterMap();
             // Recherche methode et verification auth
-            VerbMethod meth = u.searchVerbMethod(request, map, path,this.authVarName,this.authRoleVarName);
+            VerbMethod meth = u.searchVerbMethod(request, map, path, this.authVarName, this.authRoleVarName);
             // Execution methode
             res = u.execute(request, meth, map, path, params);
             /* verification si methode est rest */
@@ -105,13 +105,17 @@ public class FrontController extends HttpServlet {
                     out.println(res.toString());
                 } else if (res instanceof ModelView) {
                     ModelView modelview = (ModelView) res;
-                    String urlDispatch = modelview.getUrl();
-                    RequestDispatcher dispatcher = request.getRequestDispatcher(urlDispatch);
-                    HashMap<String, Object> data = modelview.getData();
-                    for (String key : data.keySet()) {
-                        request.setAttribute(key, data.get(key));
+                    if (modelview.getUrl().startsWith("redirect:")) {
+                        response.sendRedirect(request.getContextPath()+modelview.getUrl().substring(9));
+                    } else {
+                        String urlDispatch = modelview.getUrl();
+                        RequestDispatcher dispatcher = request.getRequestDispatcher(urlDispatch);
+                        HashMap<String, Object> data = modelview.getData();
+                        for (String key : data.keySet()) {
+                            request.setAttribute(key, data.get(key));
+                        }
+                        dispatcher.forward(request, response);
                     }
-                    dispatcher.forward(request, response);
                 }
             }
         } catch (ValidationException e) {

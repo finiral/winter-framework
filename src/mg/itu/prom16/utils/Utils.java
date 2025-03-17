@@ -3,6 +3,7 @@ package mg.itu.prom16.utils;
 import java.io.File;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.net.URLDecoder;
@@ -60,28 +61,54 @@ public class Utils {
         return c.isAnnotationPresent(Controller.class);
     }
 
-    public Object parse(Object o, Class<?> typage) {
-        if (typage.equals(int.class)) {
-            return o != null ? Integer.parseInt((String) o) : 0;
-        } else if (typage.equals(double.class)) {
-            return o != null ? Double.parseDouble((String) o) : 0;
-        } else if (typage.equals(boolean.class)) {
-            return o != null ? Boolean.parseBoolean((String) o) : false;
 
-        } else if (typage.equals(byte.class)) {
-            return o != null ? Byte.parseByte((String) o) : 0;
-
-        } else if (typage.equals(float.class)) {
-            return o != null ? Float.parseFloat((String) o) : 0;
-
-        } else if (typage.equals(short.class)) {
-            return o != null ? Short.parseShort((String) o) : 0;
-
-        } else if (typage.equals(long.class)) {
-            return o != null ? Long.parseLong((String) o) : 0;
+    public java.sql.Timestamp parseTimestamp(String datetime) {
+        try {
+            return java.sql.Timestamp.valueOf(datetime.replace("T", " ") + ":00");
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            return null;
         }
-        return typage.cast(o);
     }
+
+    public Object parse(Object o, Class<?> typage) {
+    try {
+        if (typage.equals(int.class) || typage.equals(Integer.class)) {
+            return o != null ? Integer.valueOf((String) o) : 0;
+        } else if (typage.equals(double.class) || typage.equals(Double.class)) {
+            return o != null ? Double.valueOf((String) o) : 0.0;
+        } else if (typage.equals(boolean.class) || typage.equals(Boolean.class)) {
+            return o != null ? Boolean.valueOf((String) o) : false;
+        } else if (typage.equals(byte.class) || typage.equals(Byte.class)) {
+            return o != null ? Byte.valueOf((String) o) : (byte) 0;
+        } else if (typage.equals(float.class) || typage.equals(Float.class)) {
+            return o != null ? Float.valueOf((String) o) : 0.0f;
+        } else if (typage.equals(short.class) || typage.equals(Short.class)) {
+            return o != null ? Short.valueOf((String) o) : (short) 0;
+        } else if (typage.equals(long.class) || typage.equals(Long.class)) {
+            return o != null ? Long.valueOf((String) o) : 0L;
+        } else if (typage.equals(String.class)) {
+            return o != null ? o : "";
+        } 
+        else if (typage.equals(java.sql.Timestamp.class)) {
+            return o != null ? this.parseTimestamp((String) o) : null;
+        }
+        else {
+            // Try to use valueOf method if available
+            try {
+                Method valueOfMethod = typage.getMethod("valueOf", typage);
+                return valueOfMethod.invoke(null, o);
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                // If valueOf method is not available, fallback to typage.cast(o)
+                return typage.cast(o);
+            }
+        }
+    } catch (NumberFormatException e) {
+        // Handle the exception as needed, for example, log it or rethrow it
+        e.printStackTrace();
+    }
+    return null;
+}
 
     public List<String> getAllClassesStringAnnotation(String packageName, Class annotation) throws Exception {
         List<String> res = new ArrayList<String>();
