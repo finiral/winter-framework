@@ -3,6 +3,7 @@ package mg.itu.prom16.utils;
 import java.io.File;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.net.URLDecoder;
@@ -16,6 +17,7 @@ import java.util.stream.Stream;
 
 import jakarta.servlet.http.HttpServletRequest;
 import mg.itu.prom16.annotations.Auth;
+import mg.itu.prom16.annotations.AuthC;
 import mg.itu.prom16.annotations.Controller;
 import mg.itu.prom16.annotations.ErrorUrl;
 import mg.itu.prom16.annotations.FieldParam;
@@ -59,29 +61,54 @@ public class Utils {
         return c.isAnnotationPresent(Controller.class);
     }
 
-    public Object parse(Object o, Class<?> typage) {
-        if (typage.equals(int.class)) {
-            return o != null ? Integer.parseInt((String) o) : 0;
-        } else if (typage.equals(double.class)) {
-            return o != null ? Double.parseDouble((String) o) : 0;
-        } else if (typage.equals(boolean.class)) {
-            return o != null ? Boolean.parseBoolean((String) o) : false;
 
-        } else if (typage.equals(byte.class)) {
-            return o != null ? Byte.parseByte((String) o) : 0;
-
-        } else if (typage.equals(float.class)) {
-            return o != null ? Float.parseFloat((String) o) : 0;
-
-        } else if (typage.equals(short.class)) {
-            return o != null ? Short.parseShort((String) o) : 0;
-
-        } else if (typage.equals(long.class)) {
-            return o != null ? Long.parseLong((String) o) : 0;
-
+    public java.sql.Timestamp parseTimestamp(String datetime) {
+        try {
+            return java.sql.Timestamp.valueOf(datetime.replace("T", " ") + ":00");
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            return null;
         }
-        return typage.cast(o);
     }
+
+    public Object parse(Object o, Class<?> typage) {
+    try {
+        if (typage.equals(int.class) || typage.equals(Integer.class)) {
+            return o != null ? Integer.valueOf((String) o) : 0;
+        } else if (typage.equals(double.class) || typage.equals(Double.class)) {
+            return o != null ? Double.valueOf((String) o) : 0.0;
+        } else if (typage.equals(boolean.class) || typage.equals(Boolean.class)) {
+            return o != null ? Boolean.valueOf((String) o) : false;
+        } else if (typage.equals(byte.class) || typage.equals(Byte.class)) {
+            return o != null ? Byte.valueOf((String) o) : (byte) 0;
+        } else if (typage.equals(float.class) || typage.equals(Float.class)) {
+            return o != null ? Float.valueOf((String) o) : 0.0f;
+        } else if (typage.equals(short.class) || typage.equals(Short.class)) {
+            return o != null ? Short.valueOf((String) o) : (short) 0;
+        } else if (typage.equals(long.class) || typage.equals(Long.class)) {
+            return o != null ? Long.valueOf((String) o) : 0L;
+        } else if (typage.equals(String.class)) {
+            return o != null ? o : "";
+        } 
+        else if (typage.equals(java.sql.Timestamp.class)) {
+            return o != null ? this.parseTimestamp((String) o) : null;
+        }
+        else {
+            // Try to use valueOf method if available
+            try {
+                Method valueOfMethod = typage.getMethod("valueOf", typage);
+                return valueOfMethod.invoke(null, o);
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                // If valueOf method is not available, fallback to typage.cast(o)
+                return typage.cast(o);
+            }
+        }
+    } catch (NumberFormatException e) {
+        // Handle the exception as needed, for example, log it or rethrow it
+        e.printStackTrace();
+    }
+    return null;
+}
 
     public List<String> getAllClassesStringAnnotation(String packageName, Class annotation) throws Exception {
         List<String> res = new ArrayList<String>();
@@ -149,8 +176,9 @@ public class Utils {
     public String getURIWithoutContextPath(HttpServletRequest request) {
         return request.getRequestURI().substring(request.getContextPath().length());
     }
+
     public List<String> validateField(Map<String, String[]> params, Field field, String key) {
-        List<String> errors=new ArrayList<>();
+        List<String> errors = new ArrayList<>();
         // Check if the field has a Numeric annotation
         if (field.isAnnotationPresent(Numeric.class)) {
             if (params.get(key) != null) {
@@ -177,8 +205,6 @@ public class Utils {
         }
         return errors;
     }
-    
-    
 
     public void processObject(Map<String, String[]> params, Parameter param, List<Object> ls) throws Exception {
         Map<String, List<String>> errorMap = new HashMap<>();
@@ -191,18 +217,18 @@ public class Utils {
         /// prendre les attributs
         Field[] f = c.getDeclaredFields();
         /// ATOMBOKA eto sprint 13
-    /// validation des fields 
-        for(Field field:f){
+        /// validation des fields
+        for (Field field : f) {
             String attributObjet = null;
             attributObjet = field.isAnnotationPresent(FieldParam.class)
                     ? field.getAnnotation(FieldParam.class).paramName()
                     : field.getName();
             key = nomObjet + "." + attributObjet;
-            if(validateField(params, field, key).size()>0){
+            if (validateField(params, field, key).size() > 0) {
                 errorMap.put(key, validateField(params, field, key));
             }
         }
-        if(!errorMap.isEmpty()){
+        if (!errorMap.isEmpty()) {
             throw new ValidationException(errorMap);
         }
         for (Field field : f) {
@@ -244,7 +270,10 @@ public class Utils {
                 ls.add(new MyMultiPart(req.getPart(key)));
             }
 
-            else if (!typage.isPrimitive() && !typage.equals(String.class)) {
+            // fix tableau
+            if (typage.isArray()) {
+                processArray(typage, key, param, params, ls);
+            } else if (!typage.isPrimitive() && !typage.equals(String.class)) {
                 this.processObject(params, param, ls);
             } else {
                 if (params.containsKey(param.getName())) {
@@ -267,9 +296,42 @@ public class Utils {
         return ls.toArray();
     }
 
-    public VerbMethod searchVerbMethod(HttpServletRequest req, HashMap<String, Mapping> map, String path)
+    public void processArray(Class<?> typage, String key, Parameter param, Map<String, String[]> params,
+            List<Object> ls) {
+        if (typage.getComponentType().isPrimitive() || typage.getComponentType().equals(String.class)) {
+            if (param.isAnnotationPresent(Param.class)
+                    && params.containsKey(param.getAnnotation(Param.class).paramName())) {
+                key = param.getAnnotation(Param.class).paramName();
+            } else {
+                key = param.getName();
+            }
+            if (typage.equals(int[].class)) {
+                String[] values = params.get(key);
+                int[] tab = new int[values.length];
+                for (int i = 0; i < values.length; i++) {
+                    tab[i] = Integer.parseInt(values[i]);
+                }
+                ls.add(tab);
+            }
+            if (typage.equals(double[].class)) {
+                String[] values = params.get(key);
+                double[] tab = new double[values.length];
+                for (int i = 0; i < values.length; i++) {
+                    tab[i] = Double.parseDouble(values[i]);
+                }
+                ls.add(tab);
+            }
+            if (typage.equals(String[].class)) {
+                ls.add(params.get(key));
+            }
+        }
+    }
+
+    public VerbMethod searchVerbMethod(HttpServletRequest req, HashMap<String, Mapping> map, String path,
+            String authVar, String authRole)
             throws Exception {
         if (map.containsKey(path)) {
+            boolean did = verifAuthController(map.get(path), req, authVar, authRole);
             VerbMethod[] verb_meths = (VerbMethod[]) map.get(path).getVerbmethods().toArray(new VerbMethod[0]);
             VerbMethod m = null;
             for (VerbMethod verbMethod : verb_meths) {
@@ -281,11 +343,15 @@ public class Utils {
             if (m == null) {
                 throw new ResourceNotFound("L'url ne supporte pas la méthode " + req.getMethod());
             }
+            if (!did) {
+                verifAuthMethode(m, req, authVar, authRole);
+            }
             return m;
         } else {
-            throw new Exception("Aucune méthode associé a cette url");
+            throw new Exception("Aucune méthode associé a cette url : " + path);
         }
     }
+
     public Object execute(HttpServletRequest req, VerbMethod verbmethode, HashMap<String, Mapping> map, String path,
             Map<String, String[]> params)
             throws Exception {
@@ -302,20 +368,19 @@ public class Utils {
                             new MySession(req.getSession()));
                 }
             }
-            
+
             Object[] args = null;
-            try{
+            try {
                 args = this.getArgs(req, params, methode);
-            }
-            catch(ValidationException ve){
-                if(methode.isAnnotationPresent(ErrorUrl.class)){
+            } catch (ValidationException ve) {
+                if (methode.isAnnotationPresent(ErrorUrl.class)) {
                     ve.setErrorUrl(methode.getAnnotation(ErrorUrl.class).url());
                     ve.setErrorMethod(methode.getAnnotation(ErrorUrl.class).method());
                 }
                 ve.setParamsBeforeError(params);
                 throw ve;
             }
-            res = methode.invoke(appelant,args);
+            res = methode.invoke(appelant, args);
 
         } else {
             throw new Exception(
@@ -323,6 +388,42 @@ public class Utils {
                             + verbmethode.getVerb());
         }
         return res;
-
     }
+
+    public void verifAuthMethode(VerbMethod meth, HttpServletRequest request, String authVarName,
+            String authRoleVarName) throws ResourceNotFound {
+        if (meth.getMethode().isAnnotationPresent(Auth.class)) {
+            if (request.getSession().getAttribute(authVarName) == null) {
+                throw new ResourceNotFound("Vous n'etes pas connecte");
+            }
+            if (!meth.getMethode().getAnnotation(Auth.class).authRole().equals("")) {
+                if (request.getSession().getAttribute(authRoleVarName) == null ||
+                        !request.getSession().getAttribute(authRoleVarName)
+                                .equals(meth.getMethode().getAnnotation(Auth.class).authRole())) {
+                    throw new ResourceNotFound("Vous n'avez pas le role necessaire");
+                }
+            }
+        }
+    }
+
+    public boolean verifAuthController(Mapping m, HttpServletRequest request, String authVarName,
+            String authRoleVarName)
+            throws ResourceNotFound, ClassNotFoundException {
+        Class<?> meth = Class.forName(m.getClassName());
+        if (meth.isAnnotationPresent(AuthC.class)) {
+            if (request.getSession().getAttribute(authVarName) == null) {
+                throw new ResourceNotFound("Vous n'etes pas connecte");
+            }
+            if (!meth.getAnnotation(AuthC.class).authRole().equals("")) {
+                if (request.getSession().getAttribute(authRoleVarName) == null ||
+                        !request.getSession().getAttribute(authRoleVarName)
+                                .equals(meth.getAnnotation(AuthC.class).authRole())) {
+                    throw new ResourceNotFound("Vous n'avez pas le role necessaire");
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
 }
