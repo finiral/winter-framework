@@ -1,6 +1,7 @@
 package mg.itu.prom16.controller;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.net.http.HttpRequest;
@@ -22,6 +23,7 @@ import mg.itu.prom16.annotations.AuthC;
 import mg.itu.prom16.annotations.Controller;
 import mg.itu.prom16.annotations.RestAPI;
 import mg.itu.prom16.exceptions.ValidationException;
+import mg.itu.prom16.object.Export;
 import mg.itu.prom16.object.ModelView;
 import mg.itu.prom16.object.ResourceNotFound;
 import mg.itu.prom16.object.VerbMethod;
@@ -63,7 +65,6 @@ public class FrontController extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         Utils u = new Utils();
-        PrintWriter out = response.getWriter();
         StringBuffer url = request.getRequestURL();
         /* URL a rechercher dans le map */
         String path = u.getURIWithoutContextPath(request);
@@ -77,6 +78,7 @@ public class FrontController extends HttpServlet {
             res = u.execute(request, meth, map, path, params);
             /* verification si methode est rest */
             if (meth.getMethode().isAnnotationPresent(RestAPI.class)) {
+                PrintWriter out = response.getWriter();
                 /* Changer le type du response en json */
                 response.setContentType("application/json");
                 response.setCharacterEncoding("UTF-8");
@@ -93,15 +95,15 @@ public class FrontController extends HttpServlet {
             }
             /* si methode NON REST */
             else {
-                out.println("L'URL EST :" + url);
+                /* out.println("L'URL EST :" + url);
                 out.println("L'URL a chercher dans le map : " + path);
-                /* Printer tous les controllers */
                 out.print("\n");
                 out.println("Liste de tous vos controllers : ");
                 for (String class1 : this.controllers) {
                     out.println(class1);
-                }
+                } */
                 if (res instanceof String) {
+                    PrintWriter out = response.getWriter();
                     out.println(res.toString());
                 } else if (res instanceof ModelView) {
                     ModelView modelview = (ModelView) res;
@@ -116,7 +118,14 @@ public class FrontController extends HttpServlet {
                         }
                         dispatcher.forward(request, response);
                     }
+                } else if(res instanceof Export){
+                    Export e=(Export) res;
+                    response.setContentType(e.getContentType());
+                    response.setHeader("Content-Disposition","attachment; filename="+e.getFileName()+e.getExtension());
+                    OutputStream out = response.getOutputStream();
+                    out.write(e.getBytes());
                 }
+                
             }
         } catch (ValidationException e) {
             String errorUrl = e.getErrorUrl();
