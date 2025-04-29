@@ -2,13 +2,15 @@ package mg.itu.prom16.utils;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.Field;
 import com.opencsv.CSVWriter;
 
 public class CsvConverter {
 
-    public void writeToCsv(Object[] objects, String filePath) throws IOException {
-        try (CSVWriter writer = new CSVWriter(new FileWriter(filePath))) {
+    public void writeToCsv(Object[] objects, OutputStream outputStream) throws IOException {
+        try (CSVWriter writer = new CSVWriter(new OutputStreamWriter(outputStream, "UTF-8"))) {
             if (objects.length > 0) {
                 // Write header
                 String[] headers = getHeaders(objects[0]);

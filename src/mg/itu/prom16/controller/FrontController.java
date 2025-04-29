@@ -131,32 +131,12 @@ public class FrontController extends HttpServlet {
                         OutputStream out = response.getOutputStream();
                         out.write(e.getBytes());
                     } else if (e.getExtension().equals(".csv")) {
+                        OutputStream outputStream = response.getOutputStream();
                         response.setCharacterEncoding("UTF-8");
-                        // Créer un fichier temporaire pour écrire le CSV
-                    System.out.println("ETOOOOOOOOOOOOOMIAOU");
-                        
-                        File tempFile = new File("temp.csv");
-                        if (tempFile.exists()) {
-                            tempFile.delete(); // Supprimer le fichier s'il existe déjà
-                        }
-                    System.out.println("ETOOOOOOOOOOOOO");
-                        try {
                             // Utiliser CsvConverter pour écrire dans le fichier temporaire
-                            new CsvConverter().writeToCsv(e.getData(), tempFile.getAbsolutePath());
-                            // Lire les octets du fichier temporaire et les écrire dans le flux de sortie
-                            try (FileInputStream fis = new FileInputStream(tempFile);
-                                    OutputStream outputStream = response.getOutputStream()) {
-                                byte[] buffer = new byte[1024];
-                                int bytesRead;
-                                while ((bytesRead = fis.read(buffer)) != -1) {
-                                    outputStream.write(buffer, 0, bytesRead);
-                                }
-                                outputStream.flush();
-                            }
-                        } finally {
-                            // Supprimer le fichier temporaire après utilisation
+                            new CsvConverter().writeToCsv(e.getData(),outputStream);
                             
-                        }
+                                outputStream.flush();
                     }
                 }
 
