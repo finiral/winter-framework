@@ -1,15 +1,18 @@
 package mg.itu.prom16.controller;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.lang.reflect.Method;
-import java.net.http.HttpRequest;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import com.google.gson.Gson;
+import com.opencsv.bean.ColumnPositionMappingStrategy;
+import com.opencsv.bean.StatefulBeanToCsv;
+import com.opencsv.bean.StatefulBeanToCsvBuilder;
 
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
@@ -18,8 +21,6 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
-import mg.itu.prom16.annotations.Auth;
-import mg.itu.prom16.annotations.AuthC;
 import mg.itu.prom16.annotations.Controller;
 import mg.itu.prom16.annotations.RestAPI;
 import mg.itu.prom16.exceptions.ValidationException;
@@ -27,6 +28,7 @@ import mg.itu.prom16.object.Export;
 import mg.itu.prom16.object.ModelView;
 import mg.itu.prom16.object.ResourceNotFound;
 import mg.itu.prom16.object.VerbMethod;
+import mg.itu.prom16.utils.CsvConverter;
 import mg.itu.prom16.utils.Mapping;
 import mg.itu.prom16.utils.Utils;
 
@@ -95,20 +97,22 @@ public class FrontController extends HttpServlet {
             }
             /* si methode NON REST */
             else {
-                /* out.println("L'URL EST :" + url);
-                out.println("L'URL a chercher dans le map : " + path);
-                out.print("\n");
-                out.println("Liste de tous vos controllers : ");
-                for (String class1 : this.controllers) {
-                    out.println(class1);
-                } */
+                /*
+                 * out.println("L'URL EST :" + url);
+                 * out.println("L'URL a chercher dans le map : " + path);
+                 * out.print("\n");
+                 * out.println("Liste de tous vos controllers : ");
+                 * for (String class1 : this.controllers) {
+                 * out.println(class1);
+                 * }
+                 */
                 if (res instanceof String) {
                     PrintWriter out = response.getWriter();
                     out.println(res.toString());
                 } else if (res instanceof ModelView) {
                     ModelView modelview = (ModelView) res;
                     if (modelview.getUrl().startsWith("redirect:")) {
-                        response.sendRedirect(request.getContextPath()+modelview.getUrl().substring(9));
+                        response.sendRedirect(request.getContextPath() + modelview.getUrl().substring(9));
                     } else {
                         String urlDispatch = modelview.getUrl();
                         RequestDispatcher dispatcher = request.getRequestDispatcher(urlDispatch);
@@ -118,14 +122,44 @@ public class FrontController extends HttpServlet {
                         }
                         dispatcher.forward(request, response);
                     }
-                } else if(res instanceof Export){
-                    Export e=(Export) res;
+                } else if (res instanceof Export) {
+                    Export e = (Export) res;
                     response.setContentType(e.getContentType());
-                    response.setHeader("Content-Disposition","attachment; filename="+e.getFileName()+e.getExtension());
-                    OutputStream out = response.getOutputStream();
-                    out.write(e.getBytes());
+                    response.setHeader("Content-Disposition",
+                            "attachment; filename=" + e.getFileName() + e.getExtension());
+                    if (e.getExtension().equals(".pdf")) {
+                        OutputStream out = response.getOutputStream();
+                        out.write(e.getBytes());
+                    } else if (e.getExtension().equals(".csv")) {
+                        response.setCharacterEncoding("UTF-8");
+                        // Créer un fichier temporaire pour écrire le CSV
+                    System.out.println("ETOOOOOOOOOOOOOMIAOU");
+                        
+                        File tempFile = new File("temp.csv");
+                        if (tempFile.exists()) {
+                            tempFile.delete(); // Supprimer le fichier s'il existe déjà
+                        }
+                    System.out.println("ETOOOOOOOOOOOOO");
+                        try {
+                            // Utiliser CsvConverter pour écrire dans le fichier temporaire
+                            new CsvConverter().writeToCsv(e.getData(), tempFile.getAbsolutePath());
+                            // Lire les octets du fichier temporaire et les écrire dans le flux de sortie
+                            try (FileInputStream fis = new FileInputStream(tempFile);
+                                    OutputStream outputStream = response.getOutputStream()) {
+                                byte[] buffer = new byte[1024];
+                                int bytesRead;
+                                while ((bytesRead = fis.read(buffer)) != -1) {
+                                    outputStream.write(buffer, 0, bytesRead);
+                                }
+                                outputStream.flush();
+                            }
+                        } finally {
+                            // Supprimer le fichier temporaire après utilisation
+                            
+                        }
+                    }
                 }
-                
+
             }
         } catch (ValidationException e) {
             String errorUrl = e.getErrorUrl();
@@ -150,15 +184,15 @@ public class FrontController extends HttpServlet {
                 response.getWriter().write(e.getMessage());
             }
         } catch (ResourceNotFound e) {
+            e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             response.getWriter().write(e.getMessage());
-            e.printStackTrace();
         } catch (Exception e) {
             // TODO Auto-generated catch block
             /* throw new ServletException(e); */
+            e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().write(e.getMessage());
-            e.printStackTrace();
         }
     }
 }

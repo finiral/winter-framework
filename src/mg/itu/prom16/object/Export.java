@@ -5,8 +5,29 @@ public class Export {
     private byte[] bytes;
     private String fileName;
     private String extension;
+    private Object[] data;
+    public Object[] getData() {
+        return data;
+    }
+    public void setData(Object[] data) {
+        this.data = data;
+    }
+    public void setExtension(String extension) {
+        this.extension = extension;
+    }
     public String getExtension() {
-        return ".pdf";
+        if(extension==null){
+            if(contentType.contains("pdf")){
+                setExtension(".pdf");
+            }
+            if(contentType.contains("csv")){
+                setExtension(".csv");
+            }
+            else{
+                setExtension(".txt");
+            }
+        }
+        return extension;
     }
     public String getFileName() {
         return fileName;
