@@ -152,7 +152,6 @@ public class FrontController extends HttpServlet {
                         return errorMethod;
                     }
                 };
-
                 wrappedRequest.setAttribute("errors", e.getErrorMap());
                 wrappedRequest.setAttribute("params", e.getParamsBeforeError());
                 // Dispatch the new request to errorUrl
@@ -160,19 +159,43 @@ public class FrontController extends HttpServlet {
                 dispatcher.forward(wrappedRequest, response);
             } else {
                 // Print the errors directly
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                response.getWriter().write(e.getMessage());
+                e.printStackTrace();
+                writeHtmlError(response, HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
             }
         } catch (ResourceNotFound e) {
             e.printStackTrace();
-            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            response.getWriter().write(e.getMessage());
+            writeHtmlError(response, HttpServletResponse.SC_NOT_FOUND, e.getMessage());
         } catch (Exception e) {
             // TODO Auto-generated catch block
             /* throw new ServletException(e); */
             e.printStackTrace();
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            response.getWriter().write(e.getMessage());
+            writeHtmlError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
+
+
+    private void writeHtmlError(HttpServletResponse response, int statusCode, String message) throws IOException {
+        response.setContentType("text/html;charset=UTF-8");
+        response.setStatus(statusCode);
+        PrintWriter out = response.getWriter();
+        out.println("<!DOCTYPE html>");
+        out.println("<html lang=\"fr\">");
+        out.println("<head>");
+        out.println("<meta charset=\"UTF-8\">");
+        out.println("<title>Erreur</title>");
+        out.println("<style>");
+        out.println("body { font-family: Arial, sans-serif; background-color: #f8f8f8; margin: 50px; }");
+        out.println(".error-box { border: 1px solid #e74c3c; background-color: #fef2f2; color: #c0392b; padding: 20px; border-radius: 5px; }");
+        out.println("h1 { font-size: 24px; margin-top: 0; }");
+        out.println("</style>");
+        out.println("</head>");
+        out.println("<body>");
+        out.println("<div class=\"error-box\">");
+        out.println("<h1>Erreur " + statusCode + "</h1>");
+        out.println("<p>" + message + "</p>");
+        out.println("</div>");
+        out.println("</body>");
+        out.println("</html>");
+    }
+    
 }
