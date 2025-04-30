@@ -20,7 +20,7 @@ public class Export {
             if(contentType.contains("pdf")){
                 setExtension(".pdf");
             }
-            if(contentType.contains("csv")){
+            else if(contentType.contains("csv")){
                 setExtension(".csv");
             }
             else{
